@@ -1,0 +1,54 @@
+# Ignore Node modules
+node_modules/
+
+# Ignore environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Ignore log files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Ignore build and cache files
+dist/
+build/
+.cache/
+.next/
+out/
+
+# Ignore database and generated files
+*.sqlite
+*.sqlite-journal
+*.db
+*.db-wal
+*.db-shm
+dump.rdb
+
+
+# Ignore temporary files
+tmp/
+temp/
+*.pid
+*.seed
+*.csv
+
+# Ignore AWS/Google cloud keys (if using)
+.aws/
+.gcloud/
+
+# Ignore IDE and system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+
