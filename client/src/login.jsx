@@ -59,7 +59,7 @@ function Login(props) {
                 cis: "",
                 ls: "",
                 rs: "",
-                ds: "",
+               // ds: "",
               })
             );
             navigate("home");

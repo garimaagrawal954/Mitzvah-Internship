@@ -117,9 +117,9 @@ app.post("/login", async (req, res) => {
   var result = [];
   if (req.body.flag == "admin" && req.body.userinput && req.body.userinput.username) {
     result = await fetchDatafromDatabase3(req.body.userinput.username);
-    if (result[0] && result[0].admin_flag == "Admin1") {
+    if (result[0] && result[0].admin_flag == "1") {
       if (result[0].password == req.body.userinput.password) {
-        if (req.body.flag == "admin" && result[0].admin_flag == "Admin1") {
+        if (req.body.flag == "admin" && result[0].admin_flag == "1") {
           res.send("success");
         }
       }
@@ -132,9 +132,9 @@ app.post("/login", async (req, res) => {
     }
   } else if(req.body.flag == "client" && req.body.clientinput && req.body.clientinput.username) {
     result = await fetchDatafromDatabase3(req.body.clientinput.username);
-    if (result[0] && !result[0].admin_flag) {
+    if (result[0] && result[0].admin_flag=="0") {
       if (result[0].password == req.body.clientinput.password) {
-        if (req.body.flag == "client" && !result[0].admin_flag) {
+        if (req.body.flag == "client" && result[0].admin_flag=="0") {
           res.send({ Name: result[0].name });
         }
       }
@@ -186,10 +186,10 @@ app.post("/get-name", async (req, res) => {
   if(rsp["Item"]){
   if (
     rsp["Item"]["password"] == req.body.password &&
-    rsp["Item"]["admin_flag"]!="Admin1"
+    rsp["Item"]["admin_flag"]!="1"
   ) {
     res.send({...rsp["Item"],...{flag:"client"}});
-  } else if(rsp["Item"]["password"] == req.body.password && rsp["Item"]["admin_flag"]=="Admin1") {
+  } else if(rsp["Item"]["password"] == req.body.password && rsp["Item"]["admin_flag"]=="1") {
     res.send({ flag: "admin" });
   }
   else{
@@ -224,7 +224,7 @@ app.post("/add2",async(req,res)=>{
       username:req.body.username,
       password:req.body.password,
       name:req.body.login=="Client"?req.body.name:"",
-      "admin_flag":req.body.login=="Admin"?"Admin1":"",
+      "admin_flag":req.body.login=="0"?"1":"",
       district:req.body.login=="Client"?req.body.district:"",
       city:req.body.login=="Client"?req.body.city:"",
       location:req.body.login=="Client"?req.body.location:"",
@@ -247,7 +247,7 @@ app.get("/client-select", async function (req, res) {
     } else {
       var ans = [];
       data.Items.forEach((item) => {
-        if(! item["admin_flag"]){
+        if(! item["admin_flag"]=="1"){
         ans.push(item["name"]);
         }
       });
@@ -388,7 +388,7 @@ app.get("/district-select", function (req, res) {
     } else {
       var ans = [];
       data.Items.forEach((item) => {
-        if(! item["admin_flag"]){
+        if(! item["admin_flag"]=="1"){
           ans.push(item["district"]);
           }
       });
@@ -410,7 +410,7 @@ app.get("/city-select", function (req, res) {
     } else {
       var ans = [];
       data.Items.forEach((item) => {
-        if(! item["admin_flag"]){
+        if(! item["admin_flag"]=="1"){
           ans.push(item["city"]);
           }
       });
@@ -432,7 +432,7 @@ app.get("/location-select", function (req, res) {
     } else {
       var ans = [];
       data.Items.forEach((item) => {
-        if(! item["admin_flag"]){
+        if(! item["admin_flag"]=="1"){
           ans.push(item["location"]);
           }
       });
