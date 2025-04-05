@@ -23,7 +23,7 @@ function Delcl(props) {
     else{
       // console.log("Hi");
     axios
-      .post("https://test-gjac.onrender.com/get-name", {
+      .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-name", {
         username: formdata.username,
       })
       .then((res) => {
@@ -43,7 +43,7 @@ function Delcl(props) {
   };
   function deleteit() {
     axios
-      .post("https://test-gjac.onrender.com/delete-client", {
+      .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/delete-client", {
         username: formdata.username,
       })
       .then((res) => {

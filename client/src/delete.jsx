@@ -38,7 +38,7 @@ function Delete(props) {
     }
 
     axios
-      .post("https://test-gjac.onrender.com/devicecheck", {
+      .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/devicecheck", {
         id: formdata.mac,
       })
       .then((res) => {
@@ -58,7 +58,7 @@ function Delete(props) {
   };
   function deleteit() {
     axios
-      .post("https://test-gjac.onrender.com/delete-device", {
+      .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/delete-device", {
         id: formdata.mac,
       })
       .then((res) => {

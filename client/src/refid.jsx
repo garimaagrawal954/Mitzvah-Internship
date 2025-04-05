@@ -6,7 +6,7 @@ function Refid(props) {
       props.change(event.target.id, event.target.value);
     }
     useEffect(() => {
-          axios.post("https://test-gjac.onrender.com/device-select", props).then((res) => {
+          axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", props).then((res) => {
         res.data.sort((a,b)=>{b['device-name'].localeCompare(a['device-name'])})
         setdata(res.data);
       });

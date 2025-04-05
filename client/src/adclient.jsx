@@ -47,14 +47,14 @@ function Adclient({ slide, here }) {
   };
 
   const fetchDistricts = (value) => {
-    axios.post("https://test-gjac.onrender.com/get-dist", { dis_name: value })
+    axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-dist", { dis_name: value })
       .then((res) => {
         setDistrict(res.data);
       });
   };
 
   const fetchLocations = (value) => {
-    axios.get("https://test-gjac.onrender.com/location-select")
+    axios.get("https://mitzvah-software-for-smart-air-curtain.onrender.com/location-select")
       .then((res) => {
         const filteredLocations = res.data.filter((name) =>
           name.toLowerCase().includes(value.toLowerCase())
@@ -64,7 +64,7 @@ function Adclient({ slide, here }) {
   };
 
   const fetchCities = (value) => {
-    axios.post("https://test-gjac.onrender.com/get-cities", { name: value })
+    axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-cities", { name: value })
       .then((res) => {
         setCity(res.data.results);
       });
@@ -109,7 +109,7 @@ function Adclient({ slide, here }) {
     if (chaname === 1 && changing === 1 && checkpw === 1 && formData.login !== "" &&
       ((formData.login === "Client" && formValues.district !== "" && formValues.location !== "" && formValues.city !== "") || (formData.login === "Admin"))) {
       const dataToSend = formData.login === "Client" ? { ...formData, ...formValues } : formData;
-      axios.post("https://test-gjac.onrender.com/add2", dataToSend)
+      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/add2", dataToSend)
         .then(() => {
           setdone(1);
           setchan(0);
@@ -126,7 +126,7 @@ function Adclient({ slide, here }) {
   useEffect(() => {
     if (called === 1) {
       if (formData.username) {
-        axios.post("https://test-gjac.onrender.com/get-name", {
+        axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-name", {
           username: formData.username,
           client_name: formData.name,
         }).then((res) => {
@@ -140,7 +140,7 @@ function Adclient({ slide, here }) {
           : 0
       );
     } else if (called === -2 && formData.name) {
-      axios.post("https://test-gjac.onrender.com/get-name", { client_name: formData.name })
+      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-name", { client_name: formData.name })
         .then((res) => {
           setname(res.data === "Ok name" ? 1 : 0);
         });

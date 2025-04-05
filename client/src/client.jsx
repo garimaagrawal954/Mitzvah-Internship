@@ -9,7 +9,7 @@ function Client(props) {
   let content = [];
   useEffect(() => {
     if (props.login == "Admin" && data != []) {
-      axios.get("https://test-gjac.onrender.com/client-select").then((res) => {
+      axios.get("https://mitzvah-software-for-smart-air-curtain.onrender.com/client-select").then((res) => {
         // console.log(res.data);
         setdata(() => {
           // const sortit=Array.from(new Set(res.data));

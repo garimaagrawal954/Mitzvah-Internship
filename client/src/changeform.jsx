@@ -21,7 +21,7 @@ function Changeform(props) {
       )){
     if ((formData.confpass == formData.newpass)) {
       axios
-        .post("https://test-gjac.onrender.com/add2", {
+        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/add2", {
           password: formData.confpass,
           username: JSON.parse(sessionStorage.getItem("user")).username,
           name: props.cs,

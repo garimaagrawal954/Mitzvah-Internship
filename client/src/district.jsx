@@ -8,7 +8,7 @@ function District(props) {
   }
   useEffect(() => {
     if (props.login == "Admin" && data != []) {
-    axios.get("https://test-gjac.onrender.com/district-select").then((res) => {
+    axios.get("https://mitzvah-software-for-smart-air-curtain.onrender.com/district-select").then((res) => {
       setdata(res.data);
     });
   }

@@ -7,7 +7,7 @@ function Macid(props){
     props.change(event.target.id, event.target.value);
   }
   useEffect(() => {
-        axios.post("https://test-gjac.onrender.com/device-select", props).then((res) => {
+        axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", props).then((res) => {
       setdata(res.data);
     });
   },[]);

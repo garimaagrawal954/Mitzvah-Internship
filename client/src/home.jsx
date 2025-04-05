@@ -23,7 +23,7 @@ function Home(props) {
       navigate("/");
     } else {
       axios
-        .post("https://test-gjac.onrender.com/get-name", {
+        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-name", {
           username: val.username,
           password: val.password,
         })

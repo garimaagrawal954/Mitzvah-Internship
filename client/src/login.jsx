@@ -25,7 +25,7 @@ function Login(props) {
     event.preventDefault();
     if (event.target.id === "Admin") {
       axios
-        .post("https://test-gjac.onrender.com/login", {
+        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/login", {
           userinput,
           flag: "admin",
         })
@@ -44,7 +44,7 @@ function Login(props) {
         //});
     } else {
       axios
-        .post("https://test-gjac.onrender.com/login", {
+        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/login", {
           clientinput,
           flag: "client",
         })

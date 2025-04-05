@@ -11,18 +11,18 @@ function SensorCard(props) {
   useEffect(() => {
     if (props.login == "Client" || props.login == "Admin") {
       document.getElementById("all").checked = true;
-      axios.post("https://test-gjac.onrender.com/device-select", props).then((res) => {
+      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", props).then((res) => {
         setstat([]);
         setstatcpy([]);
         res.data.map((ele) => {
           axios
-            .post("https://test-gjac.onrender.com/find", {
+            .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/find", {
               id_view: ele["uniqueId"],
             })
             .then((resu) => {
 
                 axios
-                  .post("https://test-gjac.onrender.com/checki", {
+                  .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/checki", {
                     id: ele["uniqueId"],
                   })
                   .then((nres) => {
@@ -80,7 +80,7 @@ function SensorCard(props) {
   }
   function chitst(event) {
     let i=event.target.checked;
-    axios.post("https://test-gjac.onrender.com/change",{id:event.target.id,st:event.target.checked?0:1}).then((res)=>{if(i){
+    axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/change",{id:event.target.id,st:event.target.checked?0:1}).then((res)=>{if(i){
       event.target.checked=true;
     }
   else{
