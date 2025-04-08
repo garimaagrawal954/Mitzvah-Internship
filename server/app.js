@@ -166,7 +166,10 @@ app.post("/add-data", async (req, res) => {
     Item: {
       uniqueId:req.body.macAddress,
       client_select:req.body.client,
-      "device-name":req.body.device_name
+      "device-name":req.body.device_name,
+      "wifi_name":req.body.wifi_name,
+      "wifi_password":req.body.wifi_pass,
+      "timestamp": new Date().toISOString(),
     },
   });
 
@@ -224,7 +227,7 @@ app.post("/add2",async(req,res)=>{
       username:req.body.username,
       password:req.body.password,
       name:req.body.login=="Client"?req.body.name:"",
-      "admin_flag":req.body.login=="0"?"1":"",
+      "admin_flag":req.body.login=="0"?"1":"0",
       district:req.body.login=="Client"?req.body.district:"",
       city:req.body.login=="Client"?req.body.city:"",
       location:req.body.login=="Client"?req.body.location:"",

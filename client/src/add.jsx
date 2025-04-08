@@ -11,7 +11,9 @@ function Add(props) {
   const [formValues, setFormValues] = useState({
     client: "",
     macAddress: "",
-    device_name:""
+    device_name:"",
+    wifi_name:"",
+    wifi_pass:""
   });
   const [dropdowns, setDropdowns] = useState({
     client: false,
@@ -58,9 +60,9 @@ function Add(props) {
   };
   const checkAdd = (event) => {
     event.preventDefault();
-    const { client, macAddress, device_name } = formValues;
+    const { client, macAddress, device_name,wifi_name,wifi_pass } = formValues;
 
-    if (!client || !macAddress || !device_name) {
+    if (!client || !macAddress || !device_name ||!wifi_name || !wifi_pass) {
       setFlag("Please fill all the fields");
     } 
     else if (macAddress.length !== 17) {
@@ -154,6 +156,24 @@ function Add(props) {
             placeholder="Enter Device name (MMYYSSSS)"
             id="device_name"
             value={formValues.device_name}
+            onChange={handleInputChange}
+            required
+          />
+          <input
+            name="dname"
+            type="text"
+            placeholder="Enter wifi name"
+            id="wifi_name"
+            value={formValues.wifi_name}
+            onChange={handleInputChange}
+            required
+          />
+          <input
+            name="dname"
+            type="password"
+            placeholder="Enter wifi password"
+            id="wifi_pass"
+            value={formValues.wifi_pass}
             onChange={handleInputChange}
             required
           />

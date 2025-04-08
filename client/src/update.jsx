@@ -8,6 +8,8 @@ function Update(props) {
     client: "",
     macAddress: "",
     device_name: "",
+    wifi_name: "",
+    wifi_pass: "",
   });
   const [dropdowns, setDropdowns] = useState({
     client: false,
@@ -56,6 +58,8 @@ function Update(props) {
             client: res.data.client_select,
             macAddress: res.data.uniqueId,
             device_name: res.data["device-name"],
+            wifi_name: res.data["wifi_name"],
+            wifi_pass: res.data["wifi_password"],
           });
         } else {
           setMessage("Device not found. Remove any extra spaces");
@@ -214,6 +218,26 @@ function Update(props) {
                 id="device_name"
                 placeholder="Enter Device name"
                 value={formdata.device_name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="custom-select-container">
+              <input
+                type="text"
+                id="wifi_name"
+                placeholder="Enter wifi name"
+                value={formdata.wifi_name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="custom-select-container">
+              <input
+                type="password"
+                id="wifi_pass"
+                placeholder="Enter wifi password"
+                value={formdata.wifi_pass}
                 onChange={handleChange}
                 required
               />
