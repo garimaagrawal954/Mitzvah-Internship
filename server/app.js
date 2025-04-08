@@ -132,9 +132,9 @@ app.post("/login", async (req, res) => {
     }
   } else if(req.body.flag == "client" && req.body.clientinput && req.body.clientinput.username) {
     result = await fetchDatafromDatabase3(req.body.clientinput.username);
-    if (result[0] && !result[0].admin_flag=="1") {
+    if (result[0] && result[0].admin_flag=="0") {
       if (result[0].password == req.body.clientinput.password) {
-        if (req.body.flag == "client" && !result[0].admin_flag=="1") {
+        if (req.body.flag == "client" && result[0].admin_flag=="0") {
           res.send({ Name: result[0].name });
         }
       }

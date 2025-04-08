@@ -174,11 +174,19 @@ function Adclient({ slide, here }) {
   return (
     <div
       id="slider" onClick={(e) => hideall(e)}
-      style={
-        slide === 1
-          ? { transition: "right 0.5s ease-in-out", right: "0", overflow: "hidden" }
-          : { transition: "right 0.5s ease-in-out", right: "-360px", overflow: "hidden" }
-      }
+      style={{
+        position: "fixed",
+        top: 350,
+        right: slide === 1 ? "0" : "-360px",
+        height: "70vh",
+        width: "100%",
+        maxWidth: "360px",
+        backgroundColor: "#fff",
+        zIndex: 999,
+        overflowY: "auto",
+        transition: "right 0.5s ease-in-out",
+        WebkitOverflowScrolling: "touch",
+      }}
     >
       <div id="header">
         <h2 onClick={here}>
