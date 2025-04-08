@@ -493,7 +493,9 @@ app.post("/change", async (req, res) => {
       DST:rsp["Item"].DST,
       Outdoor_Temp:rsp["Item"].Outdoor_Temp,
       Status:req.body.st==1?0:1,
-      current_dt:rsp["Item"].current_dt
+      current_dt:rsp["Item"].current_dt,
+      RPM:rsp["Item"].RPM,
+      Head_Count:rsp["Item"].Head_Count
     },
   });
   const response = await dynamoDB.send(command);
