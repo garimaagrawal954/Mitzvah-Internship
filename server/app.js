@@ -526,51 +526,39 @@ app.get("/pincode-select", function (req, res) {
   });
 });
 app.post("/change-password", async (req, res) => {
-  const { client_name, oldpass, newpass } = req.body;
+  const { username, newpass, confpass } = req.body;
 
-  if (!client_name || !oldpass || !newpass) {
-    return res.status(400).send("Missing fields");
+  // 1. Validate inputs
+  if (!username || !newpass || !confpass) {
+    return res.status(400).send("Missing required fields");
   }
 
-  try {
-    // Scan to find the client
-    const scanParams = { TableName: empTable2 };
-    const data = await new Promise((resolve, reject) => {
-      dynamoDB.scan(scanParams, (err, data) => {
-        if (err) reject(err);
-        else resolve(data);
-      });
-    });
-
-    const client = data.Items.find(
-      (item) => item.name === client_name && item.admin_flag == "0"
-    );
-
-    if (!client) {
-      return res.status(404).send("Client not found");
-    }
-
-    if ((client.password !== oldpass)) {
-      return res.status(401).send("Old password incorrect");
-    }
-
-    // Update the password
-    const updateCommand = new UpdateCommand({
-      TableName: empTable2,
-      Key: { username: client.name }, 
-      UpdateExpression: "SET password = :newpass",
-      ExpressionAttributeValues: {
-        ":newpass": newpass,
-      },
-    });
-
-    await DynamoDBDocumentClient.from(dynamoDB).send(updateCommand);
-
-    res.send("Password changed successfully");
-  } catch (err) {
-    console.error("Error:", err);
-    res.status(500).send("Internal server error");
+  // 2. Check if passwords match
+  if (newpass !== confpass) {
+    return res.status(400).send("Passwords do not match");
   }
+
+  // 3. Perform password update (same logic for all users)
+  const updateParams = {
+    TableName: empTable2,
+    Key: { username },
+    UpdateExpression: "set #pwd = :newpass",
+    ExpressionAttributeNames: {
+      "#pwd": "password",
+    },
+    ExpressionAttributeValues: {
+      ":newpass": newpass,
+    },
+  };
+
+  dynamoDB.update(updateParams, (err, data) => {
+    if (err) {
+      console.error("Update error:", err);
+      res.status(500).send("Error updating password");
+    } else {
+      res.send("Password updated successfully");
+    }
+  });
 });
 function callit(st,id) {
   var device = awsIott.device({
