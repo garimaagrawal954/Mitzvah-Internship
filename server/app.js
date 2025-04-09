@@ -231,6 +231,9 @@ app.post("/add2",async(req,res)=>{
       district:req.body.login=="Client"?req.body.district:"",
       city:req.body.login=="Client"?req.body.city:"",
       location:req.body.login=="Client"?req.body.location:"",
+      pincode:req.body.login=="Client"?req.body.pincode:"",
+      sector:req.body.login=="Client"?req.body.sector:"",
+      state:req.body.login=="Client"?req.body.state:"",
     },
   });
 
