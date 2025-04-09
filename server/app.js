@@ -253,7 +253,7 @@ app.get("/client-select", async function (req, res) {
     } else {
       var ans = [];
       data.Items.forEach((item) => {
-        if(! item["admin_flag"]=="1"){
+        if(item["admin_flag"]=="0"){
         ans.push(item["name"]);
         }
       });
@@ -394,7 +394,7 @@ app.get("/district-select", function (req, res) {
     } else {
       var ans = [];
       data.Items.forEach((item) => {
-        if(! item["admin_flag"]=="1"){
+        if( item["admin_flag"]=="0"){
           ans.push(item["district"]);
           }
       });
@@ -416,7 +416,7 @@ app.get("/city-select", function (req, res) {
     } else {
       var ans = [];
       data.Items.forEach((item) => {
-        if(! item["admin_flag"]=="1"){
+        if( item["admin_flag"]=="0"){
           ans.push(item["city"]);
           }
       });
@@ -438,11 +438,86 @@ app.get("/location-select", function (req, res) {
     } else {
       var ans = [];
       data.Items.forEach((item) => {
-        if(! item["admin_flag"]=="1"){
+        if(item["admin_flag"]=="0"){
           ans.push(item["location"]);
           }
       });
       ans = new Set(ans);
+      res.send(Array.from(ans).sort());
+    }
+  });
+});
+app.get("/state-select", function (req, res) {
+  var params = {
+    TableName: empTable2,
+  };
+
+  dynamoDB.scan(params, (err, data) => {
+    if (err) {
+      console.error(
+        "Unable to scan the table. Error JSON:",
+        JSON.stringify(err, null, 2)
+      );
+      res.status(500).send("Error scanning the table.");
+    } else {
+      var ans = [];
+      data.Items.forEach((item) => {
+        if (item["admin_flag"] == "0" && item["state"]) {
+          ans.push(item["state"]);
+        }
+      });
+
+      ans = new Set(ans); // remove duplicates
+      res.send(Array.from(ans).sort());
+    }
+  });
+});
+app.get("/sector-select", function (req, res) {
+  var params = {
+    TableName: empTable2,
+  };
+
+  dynamoDB.scan(params, (err, data) => {
+    if (err) {
+      console.error(
+        "Unable to scan the table. Error JSON:",
+        JSON.stringify(err, null, 2)
+      );
+      res.status(500).send("Error scanning the table.");
+    } else {
+      var ans = [];
+      data.Items.forEach((item) => {
+        if (item["admin_flag"] == "0" && item["sector"]) {
+          ans.push(item["sector"]);
+        }
+      });
+
+      ans = new Set(ans); // remove duplicates
+      res.send(Array.from(ans).sort());
+    }
+  });
+});
+app.get("/pincode-select", function (req, res) {
+  var params = {
+    TableName: empTable2,
+  };
+
+  dynamoDB.scan(params, (err, data) => {
+    if (err) {
+      console.error(
+        "Unable to scan the table. Error JSON:",
+        JSON.stringify(err, null, 2)
+      );
+      res.status(500).send("Error scanning the table.");
+    } else {
+      var ans = [];
+      data.Items.forEach((item) => {
+        if (item["admin_flag"] == "0" && item["pincode"]) {
+          ans.push(item["pincode"]);
+        }
+      });
+
+      ans = new Set(ans); // remove duplicates
       res.send(Array.from(ans).sort());
     }
   });

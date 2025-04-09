@@ -173,6 +173,15 @@ function SensorCard(props) {
               <th style={{ textAlign: "center" }}>
                 <u>Location</u>
               </th>
+              <th style={{ textAlign: "center" }}>
+                <u>Sector</u>
+              </th>
+              <th style={{ textAlign: "center" }}>
+                <u>State</u>
+              </th>
+              <th style={{ textAlign: "center" }}>
+                <u>Pin Code</u>
+              </th>
               {props.login == "Admin" ? (
                 <th style={{ textAlign: "center" }}>
                   <u>Change Status</u>
@@ -200,6 +209,9 @@ function SensorCard(props) {
                   <td style={{ textAlign: "center" }}>{ele[Object.keys(ele)[0]][0]["district"]}</td>
                   <td style={{ textAlign: "center" }}>{ele[Object.keys(ele)[0]][0]["city"]}</td>
                   <td style={{ textAlign: "center" }}>{ele[Object.keys(ele)[0]][0]["location"]}</td>
+                  <td style={{ textAlign: "center" }}>{ele[Object.keys(ele)[0]][0]["sector"]}</td>
+                  <td style={{ textAlign: "center" }}>{ele[Object.keys(ele)[0]][0]["state"]}</td>
+                  <td style={{ textAlign: "center" }}>{ele[Object.keys(ele)[0]][0]["pincode"]}</td>
                   {props.login == "Admin" ? (
                     <td style={{ textAlign: "center" }}>
                       <div class="toggle-container">
