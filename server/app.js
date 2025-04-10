@@ -151,39 +151,42 @@ app.post("/login", async (req, res) => {
   }
 });
 const port = process.env.PORT || 3000;
-app.post("/add-data/:macAddress", async (req, res) => {
-  const dynamoDB = DynamoDBDocument.from(
-    new DynamoDB({
-      region: aws_region,
-      credentials: {
-        accessKeyId: my_AWSAccessKeyId,
-        secretAccessKey: my_AWSSecretKey,
+app.post(
+  "/add-data-iot/:macAddress/:client/:device_name/:wifi_name/:wifi_pass",
+  async (req, res) => {
+    const dynamoDB = DynamoDBDocument.from(
+      new DynamoDB({
+        region: aws_region,
+        credentials: {
+          accessKeyId: my_AWSAccessKeyId,
+          secretAccessKey: my_AWSSecretKey,
+        },
+      })
+    );
+
+    const { macAddress, client, device_name, wifi_name, wifi_pass } = req.params;
+
+    const command = new PutCommand({
+      TableName: empTable3,
+      Item: {
+        uniqueId: macAddress,
+        client_select: client,
+        "device-name": device_name,
+        "wifi_name": wifi_name,
+        "wifi_password": wifi_pass,
+        timestamp: new Date().toISOString(),
       },
-    })
-  );
+    });
 
-  const macAddress = req.params.macAddress;
-
-  const command = new PutCommand({
-    TableName: empTable3,
-    Item: {
-      uniqueId: macAddress,
-      client_select: req.body.client,
-      "device-name": req.body.device_name,
-      "wifi_name": req.body.wifi_name,
-      "wifi_password": req.body.wifi_pass,
-      timestamp: new Date().toISOString(),
-    },
-  });
-
-  try {
-    const response = await dynamoDB.send(command);
-    res.status(200).send("Data added successfully");
-  } catch (error) {
-    console.error("Error inserting data:", error);
-    res.status(500).send("Error inserting data");
+    try {
+      const response = await dynamoDB.send(command);
+      res.status(200).send("Data added successfully");
+    } catch (error) {
+      console.error("Error inserting data:", error);
+      res.status(500).send("Error inserting data");
+    }
   }
-});
+);
 app.post("/add-data", async (req, res) => {
   var dynamoDB = DynamoDBDocument.from(
     new DynamoDB({
