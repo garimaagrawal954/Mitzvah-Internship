@@ -12,6 +12,7 @@ import {
   GetCommand,
   PutCommand,
   DeleteCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 const app = express();
@@ -187,6 +188,57 @@ app.post(
     }
   }
 );
+app.post("/user-role", async (req, res) => {
+  const username = req.body.name;
+
+  const params = {
+    TableName: empTable2,
+  };
+
+  dynamoDB.scan(params, (err, data) => {
+    if (err) {
+      console.error("Scan error:", err);
+      return res.status(500).send("Error checking user role");
+    }
+
+    const user = data.Items.find(item => item.username === username);
+
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    const role = user.admin_flag === "0" ? "client" : "admin";
+    res.send({ username, role });
+  });
+});
+app.post("/check-power", async (req, res) => {
+  const { id, power } = req.body;
+
+  if (!id || power === undefined) {
+    return res.status(400).send("Missing id or power value");
+  }
+
+  const failedMessage = power > 1000 ? "device failed due to exceeding power limit" : "";
+
+  const updateParams = {
+    TableName: empTable1,
+    Key: {
+      uniqueId: id,
+    },
+    UpdateExpression: "SET Failed_Device = :fd",
+    ExpressionAttributeValues: {
+      ":fd": failedMessage,
+    },
+  };
+
+  try {
+    await DynamoDBDocumentClient.from(dynamoDB).send(new UpdateCommand(updateParams));
+    res.send("Device power check and failure status updated");
+  } catch (error) {
+    console.error("Error in power check:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
 app.post("/add-data", async (req, res) => {
   var dynamoDB = DynamoDBDocument.from(
     new DynamoDB({
