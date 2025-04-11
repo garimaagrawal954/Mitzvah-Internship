@@ -1,7 +1,7 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { format } from 'date-fns';
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function View(props) {
   const navigate = useNavigate();
@@ -14,12 +14,8 @@ function View(props) {
       st: i === "OFF" ? 0 : 1,
       id: props.id_view,
     })
-      .then((res) => {
-        if (i === "ON") {
-          document.getElementById("status").innerText = "OFF";
-        } else {
-          document.getElementById("status").innerText = "ON";
-        }
+      .then(() => {
+        document.getElementById("status").innerText = i === "ON" ? "OFF" : "ON";
       })
       .catch((err) => {
         console.log(err);
@@ -60,6 +56,21 @@ function View(props) {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (data[0] && data[0].Power !== undefined) {
+      updateFailureStatus(data[0].Power);
+    }
+  }, [data]);
+
+  function updateFailureStatus(power) {
+    axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/check-power", {
+      id: props.id_view,
+      power: power,
+    }).catch(err => {
+      console.log("Error updating Failed_Device:", err);
+    });
+  }
+
   const isStatusOn = con[0] === "ON";
 
   return (
@@ -80,54 +91,42 @@ function View(props) {
             <div>
               <div className="value-circle">
                 <div>{isStatusOn ? Math.round(data[0]["Indoor_Temp"]) : NaN}°C</div>
-                <div>
-                  <i className="fas fa-thermometer-half"></i>
-                </div>
+                <div><i className="fas fa-thermometer-half"></i></div>
               </div>
               <div className="value-name">Indoor Temperature</div>
             </div>
             <div>
               <div className="value-circle">
                 <div id="status">{data[0]["Status"] === 0 ? "OFF" : "ON"}</div>
-                <div>
-                  <i className="fas fa-power-off"></i>
-                </div>
+                <div><i className="fas fa-power-off"></i></div>
               </div>
               <div className="value-name">Status</div>
             </div>
             <div>
               <div className="value-circle">
                 <div>{isStatusOn ? Math.round(data[0]["Outdoor_Temp"]) : NaN}°C</div>
-                <div>
-                  <i className="fas fa-sun"></i>
-                </div>
+                <div><i className="fas fa-sun"></i></div>
               </div>
               <div className="value-name">Outdoor Temperature</div>
             </div>
             <div>
               <div className="value-circle">
                 <div>{isStatusOn ? data[0]["Head_Count"] || 0 : 0}</div>
-                <div>
-                  <i className="fas fa-door-open"></i>
-                </div>
+                <div><i className="fas fa-door-open"></i></div>
               </div>
               <div className="value-name">Head Count</div>
             </div>
             <div>
               <div className="value-circle">
                 <div>{isStatusOn ? Math.round(data[0]["RPM"]) || 0 : 0}</div>
-                <div>
-                  <i className="fas fa-tachometer-alt"></i>
-                </div>
+                <div><i className="fas fa-tachometer-alt"></i></div>
               </div>
               <div className="value-name">RPM</div>
             </div>
             <div>
               <div className="value-circle">
                 <div>{isStatusOn ? Math.round(data[0]["Power"]) || 0 : 0}</div>
-                <div>
-                  <i className="fas fa-bolt"></i>
-                </div>
+                <div><i className="fas fa-bolt"></i></div>
               </div>
               <div className="value-name">Power</div>
             </div>
@@ -144,7 +143,11 @@ function View(props) {
             {data[0]["current_dt"] ? "Last Updated Data on :" + format(new Date(data[0]["current_dt"]), 'yyyy-MM-dd HH:mm:ss') : "Can't fetch the last date and time"}
           </p>
         </div>
-      ) : <h2 align="center" style={{ fontFamily: "cursive", marginTop: "220px" }}>Oops!! Can't fetch the data. The device is not activated yet !...</h2>}
+      ) : (
+        <h2 align="center" style={{ fontFamily: "cursive", marginTop: "220px" }}>
+          Oops!! Can't fetch the data. The device is not activated yet !...
+        </h2>
+      )}
     </>
   );
 }
