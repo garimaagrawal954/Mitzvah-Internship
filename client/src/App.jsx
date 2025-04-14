@@ -45,6 +45,7 @@ function App() {
               element={<View id_view={id_view} login={login}/>}
             ></Route>
             <Route path="/details" element={<Details />} />
+            <Route path="/details/:id" element={<Details />} />
           </Routes>
           <Footer />
         </>

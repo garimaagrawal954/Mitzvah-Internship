@@ -137,12 +137,12 @@ function View(props) {
             ) : null}
             <button onClick={chitt} id="refresh_button">Refresh</button>
             <button
-  id="check_table"
-  style={{ margin: '0px 0px 0px 10px' }}
-  onClick={() => navigate('/details', { state: { deviceData: data[0] } })}
->
-  See Records
-</button>
+              id="check_table"
+              style={{ margin: '0px 0px 0px 10px' }}
+              onClick={() => navigate(`/details/${data[0].uniqueId}`)} // Use device ID in URL
+            >
+              See Records
+            </button>
           </div>
           <hr />
           <p style={{ fontFamily: "Times New Roman", fontSize: "20px" }}>
