@@ -10,6 +10,7 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 const Home=lazy(()=>import("./home"));
 const View=lazy(()=>import("./view"));
 const Login=lazy(()=>import("./login"));
+const Details = lazy(() => import("./details"));
 
 function App() {
   const [login,setlogin]=useState("Out");
@@ -43,6 +44,7 @@ function App() {
               path="/view"
               element={<View id_view={id_view} login={login}/>}
             ></Route>
+            <Route path="/details" element={<Details />} />
           </Routes>
           <Footer />
         </>

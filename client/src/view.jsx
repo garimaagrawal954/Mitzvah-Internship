@@ -136,7 +136,13 @@ function View(props) {
               <button onClick={chit}>Change Status</button>
             ) : null}
             <button onClick={chitt} id="refresh_button">Refresh</button>
-            <button onClick={() => navigate('/details')} id="check_table" style={{ margin: '0px 0px 0px 10px' }}>See Records</button>
+            <button
+  id="check_table"
+  style={{ margin: '0px 0px 0px 10px' }}
+  onClick={() => navigate('/details', { state: { deviceData: data[0] } })}
+>
+  See Records
+</button>
           </div>
           <hr />
           <p style={{ fontFamily: "Times New Roman", fontSize: "20px" }}>
