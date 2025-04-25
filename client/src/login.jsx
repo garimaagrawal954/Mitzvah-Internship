@@ -2,225 +2,167 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "./login.css";
 
-function Login(props) {
-  const [type, settype] = useState(0);
-  const [type2, settype2] = useState(0);
+function Login({ setinput }) {
+  const [userInput, setUserInput] = useState({ username: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [msg, setMsg] = useState("");
   const navigate = useNavigate();
-  const [msg, setmsg] = useState("");
-  const [userinput, setinput] = useState({ username: "", password: "" });
-  const [clientinput, setclient] = useState({ username: "", password: "" });
 
-  // Redirect if user is already logged in
   useEffect(() => {
     const val = sessionStorage.getItem("user");
-    if (val) {
-      navigate("home");
-    }
-  }, [navigate]);  // Added `navigate` to dependencies
+    if (val) navigate("home");
+  }, [navigate]);
 
-  // Handles login
-  function enter(event) {
+  const handleLogin = async (event) => {
     event.preventDefault();
-    if (event.target.id === "Admin") {
-      axios
-        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/login", {
-          userinput,
-          flag: "admin",
-        })
-        .then((res) => {
-          if (res.data === "success") {
-            sessionStorage.setItem("user", JSON.stringify(userinput));
-            props.setinput(event.target.id);
-            navigate("home");
-            window.location.reload();
-          } else {
-            setmsg(res.data);
-          }
-        })
-        //.catch((err) => {
-          //console.error(err);
-        //});
-    } else {
-      axios
-        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/login", {
-          clientinput,
-          flag: "client",
-        })
-        .then((res) => {
-          if (res.data.Name) {
-            sessionStorage.setItem("user", JSON.stringify(clientinput));
-            sessionStorage.setItem(
-              "filter",
-              JSON.stringify({
-                cs: "",
-                ds: "",
-                cis: "",
-                ls: "",
-                rs: "",
-               // ds: "",
-              })
-            );
-            navigate("home");
-            window.location.reload();
-          } else {
-            setmsg(res.data);
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+    setMsg("");
+
+    try {
+      debugger;
+
+      const roleResponse = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/user-role", {
+        name: userInput.username,
+      });
+
+      const role = roleResponse.data.role;
+      const flag = role === "client" ? "client" : "admin";
+
+      const res = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/login", {
+        [flag === "client" ? "clientinput" : "userinput"]: userInput,
+        flag,
+      });
+
+      if (res.data === "success" || res.data.Name) {
+        sessionStorage.setItem("user", JSON.stringify(userInput));
+        if (flag === "client") {
+          sessionStorage.setItem(
+            "filter",
+            JSON.stringify({
+              cs: "",
+              ds: "",
+              cis: "",
+              ls: "",
+              rs: "",
+            })
+          );
+        }
+        setinput && setinput(flag);
+        navigate("home");
+        window.location.reload();
+      } else {
+        setMsg(res.data);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setMsg("Login failed. Please try again.");
     }
-  }
-
-  // Updates userinput state for Admin login
-  function fillme(event) {
-    setinput({ ...userinput, [event.target.name]: event.target.value });
-  }
-
-  // Updates clientinput state for Client login
-  function fillmee(event) {
-    setclient({ ...clientinput, [event.target.name]: event.target.value });
-  }
-
-  // Toggles between login forms
-  function checkitt(event) {
-    const container = document.getElementById("container-login");
-    if (event.target.id === "signUp") {
-      container.classList.add("right-panel-active");
-    } else {
-      container.classList.remove("right-panel-active");
-    }
-  }
+  };
 
   return (
-    <div className="ok">
-      <div className="container" id="container-login">
-        <div className="form-container sign-up-container">
-          <form>
-            <h1>Client Login</h1>
-            <div className="social-container">
-              <a className="social">
-                <i className="fab fa-facebook-f"></i>
-              </a>
-              <a className="social">
-                <i className="fab fa-google-plus-g"></i>
-              </a>
-              <a className="social">
-                <i className="fab fa-linkedin-in"></i>
-              </a>
-            </div>
-            <span>or use your email for registration</span>
-            <input
-              type="email"
-              placeholder="Enter username: Client"
-              name="username"
-              value={clientinput.username}
-              onChange={fillmee}
-            />
-            <div style={{ width: "100%" }}>
-              <input
-                type={type === 0 ? "password" : "text"}
-                placeholder="Enter Password: Client@12345"
-                name="password"
-                value={clientinput.password}
-                onChange={fillmee}
-              />
-              <i
-                id="togglePassword"
-                className="fas fa-eye-slash"
-                onClick={(event) => {
-                  settype(type === 0 ? 1 : 0);
-                  event.target.classList.toggle("fa-eye");
-                  event.target.classList.toggle("fa-eye-slash");
-                }}
-                style={{
-                  position: "absolute",
-                  marginTop: "24px",
-                  marginLeft: "-29px",
-                  cursor: "pointer",
-                }}
-              ></i>
-            </div>
-            {msg && <p style={{ color: "red" }}>{msg}</p>}
-            <button id="Client" onClick={enter}>
-              Sign In
-            </button>
-          </form>
-        </div>
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "top",
+        background: "#fff",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(to top right, #00c853, #00e676)",
+          padding: "40px",
+          borderRadius: "12px",
+          boxShadow: "0 0 20px rgba(0,0,0,0.2)",
+          maxHeight: "400px",
+          marginTop: "80px",
+          width: "100%",
+          maxWidth: "400px",
+        }}
+      >
+        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column" }}>
+          <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Login</h1>
+          <span style={{ textAlign: "center", marginBottom: "20px", color: "#666" }}>
+            Enter your credentials
+          </span>
 
-        <div className="form-container sign-in-container">
-          <form>
-            <h1>Admin Login</h1>
-            <div className="social-container">
-              <a className="social">
-                <i className="fab fa-facebook-f"></i>
-              </a>
-              <a className="social">
-                <i className="fab fa-google-plus-g"></i>
-              </a>
-              <a className="social">
-                <i className="fab fa-linkedin-in"></i>
-              </a>
-            </div>
-            <span>or use your account</span>
-            <input
-              type="email"
-              placeholder="Enter username: Admin"
-              name="username"
-              value={userinput.username}
-              onChange={fillme}
-            />
-            <div style={{ width: "100%" }}>
-              <input
-                type={type2 === 0 ? "password" : "text"}
-                placeholder="Enter password: Admin@123"
-                name="password"
-                value={userinput.password}
-                onChange={fillme}
-              />
-              <i
-                id="togglePassword"
-                className="fas fa-eye-slash"
-                onClick={(event) => {
-                  settype2(type2 === 0 ? 1 : 0);
-                  event.target.classList.toggle("fa-eye");
-                  event.target.classList.toggle("fa-eye-slash");
-                }}
-                style={{
-                  position: "absolute",
-                  marginTop: "24px",
-                  marginLeft: "-29px",
-                  cursor: "pointer",
-                }}
-              ></i>
-            </div>
-            {msg && <p style={{ color: "red" }}>{msg}</p>}
-            <button id="Admin" onClick={enter}>
-              Sign In
-            </button>
-          </form>
-        </div>
+          <input
+            type="text"
+            placeholder="Username"
+            name="username"
+            value={userInput.username}
+            onChange={(e) =>
+              setUserInput({ ...userInput, username: e.target.value })
+            }
+            required
+            style={{
+              padding: "12px",
+              marginBottom: "15px",
+              borderRadius: "6px",
+              border: "1px solid #ccc",
+              fontSize: "16px",
+            }}
+          />
 
-        <div className="overlay-container">
-          <div className="overlay">
-            <div className="overlay-panel overlay-left">
-              <h1>Welcome Back!</h1>
-              <p>To keep connected with us please login with your personal info</p>
-              <button className="ghost" id="signIn" onClick={checkitt}>
-                Admin Login
-              </button>
-            </div>
-            <div className="overlay-panel overlay-right">
-              <h1>Hello, Friend!</h1>
-              <p>Enter your personal details and start journey with us</p>
-              <button className="ghost" id="signUp" onClick={checkitt}>
-                Client Login
-              </button>
-            </div>
+          <div style={{ position: "relative", marginBottom: "15px" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              name="password"
+              value={userInput.password}
+              onChange={(e) =>
+                setUserInput({ ...userInput, password: e.target.value })
+              }
+              required
+              style={{
+                width: "100%",
+                padding: "12px",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+                fontSize: "16px",
+              }}
+            />
+            <i
+              className={`fas ${showPassword ? "fa-eye" : "fa-eye-slash"}`}
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                top: "50%",
+                right: "12px",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+                color: "#777",
+              }}
+            />
           </div>
-        </div>
+
+          {msg && (
+            <p style={{ color: "red", marginBottom: "10px", textAlign: "center" }}>
+              {msg}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            style={{
+              padding: "12px",
+              borderRadius: "6px",
+              border: "none",
+              backgroundColor: "#2575fc",
+              color: "#fff",
+              fontSize: "16px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              transition: "background-color 0.3s ease",
+            }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#1a5ed8")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#2575fc")}
+          >
+            Sign In
+          </button>
+        </form>
       </div>
     </div>
   );
