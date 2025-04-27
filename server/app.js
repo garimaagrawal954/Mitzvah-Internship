@@ -13,6 +13,7 @@ import {
   PutCommand,
   DeleteCommand,
   UpdateCommand,
+  QueryCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 const app = express();
