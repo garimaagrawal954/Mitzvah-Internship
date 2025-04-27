@@ -139,7 +139,7 @@ function View(props) {
             <button
               id="check_table"
               style={{ margin: '0px 0px 0px 10px' }}
-              onClick={() => navigate(`/details/${data[0].uniqueId}`)} // Use device ID in URL
+              onClick={() => navigate(`/device-history/${data[0].uniqueId}`)}  // Use device ID in URL
             >
               See Records
             </button>

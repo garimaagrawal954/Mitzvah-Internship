@@ -3,58 +3,67 @@ import { useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// Generate some dummy data for the last 30 days
-function generateDummyData() {
-  const data = [];
-  const currentDate = new Date();
-
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(currentDate);
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: date.toISOString().split("T")[0], // 'YYYY-MM-DD'
-      head_count: Math.floor(Math.random() * 100),
-      indoor_temp: (Math.random() * 5 + 20).toFixed(2),
-      outdoor_temp: (Math.random() * 10 + 15).toFixed(2),
-      power: (Math.random() * 50 + 100).toFixed(2),
-      rpm: Math.floor(Math.random() * 5000),
-      failed_status: Math.random() > 0.9,
-    });
+// Fetch data from API
+const fetchData = async (uniqueId, startDate, endDate) => {
+  const url = new URL(`https://mitzvah-software-for-smart-air-curtain.onrender.com/items/${uniqueId}`);
+  if (startDate && endDate) {
+    url.searchParams.append("startDate", startDate);
+    url.searchParams.append("endDate", endDate);
   }
 
-  return data;
-}
+  const response = await fetch(url);
+  const data = await response.json();
+  console.log("Fetched data:", data);
+  return data.items;
+};
 
 function DeviceHistory() {
   const { id } = useParams(); // Get device ID from URL
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  // Convert date string to Unix timestamp (milliseconds)
+  const convertToTimestamp = (dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return date.getTime(); // Return the timestamp in milliseconds
+  };
+
   useEffect(() => {
-    const fetchData = () => {
-      const data = generateDummyData();
-      setHistory(data);
-      setLoading(false);
+    const fetchDeviceHistory = async () => {
+      try {
+        setLoading(true);
+        const startTimestamp = convertToTimestamp(startDate);
+        const endTimestamp = convertToTimestamp(endDate);
+        const data = await fetchData(id, startTimestamp, endTimestamp);
+        setHistory(data);
+      } catch (error) {
+        console.error("Error fetching device history:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchData();
-  }, [id]);
+    fetchDeviceHistory();
+  }, [id, startDate, endDate]); // Re-fetch data when ID or date filters change
 
   // 🔍 Filter and sort by date descending
   const filteredData = history
     .filter((item) => {
-      const itemDate = new Date(item.date);
-      const start = startDate ? new Date(startDate) : null;
-      const end = endDate ? new Date(endDate) : null;
+      const itemDate = new Date(item.current_dt); // Item date is in Unix timestamp (current_dt)
+      const itemTimestamp = itemDate.getTime();
 
-      if (start && itemDate < start) return false;
-      if (end && itemDate > end) return false;
+      // Apply filters if dates are set
+      const start = startDate ? convertToTimestamp(startDate) : null;
+      const end = endDate ? convertToTimestamp(endDate) : null;
+
+      if (start && itemTimestamp < start) return false;
+      if (end && itemTimestamp > end) return false;
       return true;
     })
-    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Most recent first
+    .sort((a, b) => new Date(b.current_dt) - new Date(a.current_dt)); // Most recent first
 
   const downloadPDF = () => {
     const doc = new jsPDF();
@@ -65,13 +74,13 @@ function DeviceHistory() {
       startY: 20,
       head: [["Date", "Head Count", "Indoor Temp", "Outdoor Temp", "Power", "RPM", "Failed"]],
       body: filteredData.map((item) => [
-        item.date,
-        item.head_count,
-        item.indoor_temp,
-        item.outdoor_temp,
-        item.power,
-        item.rpm,
-        item.failed_status ? "Yes" : "No",
+        new Date(item.current_dt).toLocaleDateString(), // Format Unix timestamp to readable date
+        item.Head_Count,  // Mapped to Head Count
+        item.Indoor_Temp,  // Mapped to Indoor Temp
+        item.Outdoor_Temp,  // Mapped to Outdoor Temp
+        item.Power,  // Mapped to Power
+        item.RPM,    // Mapped to RPM
+        item.Failed_Device ? "Yes" : "No",  // Mapped to Failed status (if Failed_Device is empty, it will show "No")
       ]),
     });
 
@@ -95,11 +104,19 @@ function DeviceHistory() {
       <div style={{ marginBottom: "20px" }}>
         <label style={{ marginRight: "10px" }}>
           Start Date:{" "}
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
         </label>
         <label>
           End Date:{" "}
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
         </label>
       </div>
 
@@ -144,13 +161,13 @@ function DeviceHistory() {
           <tbody>
             {filteredData.map((item, index) => (
               <tr key={index}>
-                <td style={tdStyle}>{item.date}</td>
-                <td style={tdStyle}>{item.head_count}</td>
-                <td style={tdStyle}>{item.indoor_temp}°C</td>
-                <td style={tdStyle}>{item.outdoor_temp}°C</td>
-                <td style={tdStyle}>{item.power} W</td>
-                <td style={tdStyle}>{item.rpm}</td>
-                <td style={tdStyle}>{item.failed_status ? "Yes" : "No"}</td>
+                <td style={tdStyle}>{new Date(item.current_dt).toLocaleDateString()}</td>
+                <td style={tdStyle}>{item.Head_Count}</td>
+                <td style={tdStyle}>{item.Indoor_Temp}°C</td>
+                <td style={tdStyle}>{item.Outdoor_Temp}°C</td>
+                <td style={tdStyle}>{item.Power} W</td>
+                <td style={tdStyle}>{item.RPM}</td>
+                <td style={tdStyle}>{item.Failed_Device ? "Yes" : "No"}</td>
               </tr>
             ))}
           </tbody>
