@@ -75,6 +75,7 @@ const aws_region = process.env.AWS_REGION;
 const empTable1 = process.env.EMP_TABLE_1
 const empTable2 = process.env.EMP_TABLE_2
 const empTable3 = process.env.EMP_TABLE_3
+const empTable4 = process.env.EMP_TABLE_4
 
 var dynamoDB = DynamoDBDocument.from(
   new DynamoDB({
@@ -114,6 +115,71 @@ async function fetchDatafromDatabase3(ele) {
   );
   return [rsp["Item"]];
 }
+async function fetchDatafromDatabase4(ele) {
+  // ele should be an object containing { uniqueId, current_dt }
+  var params = {
+    TableName: empTable4,
+    Key: {
+      uniqueId: ele.uniqueId,
+      current_dt: ele.current_dt,
+    },
+  };
+  const rsp = await DynamoDBDocumentClient.from(dynamoDB).send(
+    new GetCommand(params)
+  );
+  return [rsp["Item"]];
+}
+async function fetchAllDataByUniqueId(ele) {
+  // ele should be an object containing at least { uniqueId }
+  var params = {
+    TableName: empTable4,
+    KeyConditionExpression: "uniqueId = :uid",
+    ExpressionAttributeValues: {
+      ":uid": ele.uniqueId,
+    },
+  };
+  const rsp = await DynamoDBDocumentClient.from(dynamoDB).send(
+    new QueryCommand(params)
+  );
+  return rsp.Items || []; // return an empty array if no items found
+}
+async function fetchDataByUniqueIdAndDateRange(ele) {
+  // ele should be an object containing { uniqueId, startDate, endDate }
+  var params = {
+    TableName: empTable4,
+    KeyConditionExpression: "uniqueId = :uid AND current_dt BETWEEN :startDt AND :endDt",
+    ExpressionAttributeValues: {
+      ":uid": ele.uniqueId,
+      ":startDt": Number(ele.startDate),  // 🛠 convert to Number
+      ":endDt": Number(ele.endDate), 
+    },
+  };
+  const rsp = await DynamoDBDocumentClient.from(dynamoDB).send(
+    new QueryCommand(params)
+  );
+  return rsp.Items || []; // return an empty array if no items found
+}
+app.get("/items/:uniqueId", async (req, res) => {
+  const { uniqueId } = req.params;
+  const { startDate, endDate } = req.query;
+
+  try {
+    let data;
+    if (startDate && endDate) {
+      // both dates present → range query
+      data = await fetchDataByUniqueIdAndDateRange({ uniqueId, startDate, endDate });
+    } else {
+      // no or partial dates → fetch all
+      data = await fetchAllDataByUniqueId({ uniqueId });
+    }
+    return res.json({ count: data.length, items: data });
+  } catch (err) {
+    console.error("DynamoDB query error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+
 app.post("/login", async (req, res) => {
   var result = [];
   if (req.body.flag == "admin" && req.body.userinput && req.body.userinput.username) {
