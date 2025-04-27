@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 function Details() {
   const { id } = useParams(); // Get device ID from URL
   const [device, setDevice] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDevice = async () => {
@@ -89,7 +90,9 @@ function Details() {
             </td>
             <td style={tdStyle}>{device.current_dt ? new Date(device.current_dt).toLocaleString() : "N/A"}</td>
             <td style={tdStyle}>{device.location || "N/A"}</td>
-            <td style={tdStyle}>📥 ⬜</td>
+            <td style={tdStyle}><button onClick={() => navigate(`/device-history/${device.uniqueId}`)}>
+    📊 View History
+  </button></td>
           </tr>
         </tbody>
       </table>

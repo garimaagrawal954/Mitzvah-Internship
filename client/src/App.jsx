@@ -2,6 +2,7 @@ import React, { useState, useEffect, Suspense, lazy } from "react";
 import Loader from "./loader";
 import Header from "./header";
 import Footer from "./Footer";
+import DeviceHistory from "./DeviceHistory";
 import { AnimatePresence } from "framer-motion";
 // import Home from "./home";
 // import View from "./view";
@@ -46,6 +47,7 @@ function App() {
             ></Route>
             <Route path="/details" element={<Details />} />
             <Route path="/details/:id" element={<Details />} />
+            <Route path="/device-history/:id" element={<DeviceHistory />} />
           </Routes>
           <Footer />
         </>
