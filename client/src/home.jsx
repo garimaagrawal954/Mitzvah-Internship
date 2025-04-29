@@ -13,11 +13,13 @@ import "./index.css";
 function Home(props) {
   const navigate = useNavigate();
   const [s, sets] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);  // State to track if the user is admin
+
   useEffect(() => {
     const val = JSON.parse(sessionStorage.getItem("user"));
-    let val2=JSON.parse(sessionStorage.getItem("filter"))
-    if(! val2){
-      sessionStorage.setItem("filter",JSON.stringify({cs:"",ds:"",cis:"",ls:"",rs:"",ms:""}))
+    let val2 = JSON.parse(sessionStorage.getItem("filter"));
+    if (!val2) {
+      sessionStorage.setItem("filter", JSON.stringify({ cs: "", ds: "", cis: "", ls: "", rs: "", ms: "" }));
     }
     if (!val) {
       navigate("/");
@@ -28,7 +30,7 @@ function Home(props) {
           password: val.password,
         })
         .then((res) => {
-          if (res.data.flag == "client") {
+          if (res.data.flag === "client") {
             props.setcs(res.data.name);
             props.setcis(res.data.city);
             props.setls(res.data.location);
@@ -36,28 +38,39 @@ function Home(props) {
             setTimeout(() => {
               props.setlogin("Client");
             }, 10);
+          } else if (res.data.flag === "admin") {
+            // Call the /user-role API to check if the user is an admin
+            axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/user-role", { name: val.username })
+              .then(response => {
+                if (response.data.role === "admin") {
+                  setIsAdmin(true);  // Set user as admin
+                } else {
+                  setIsAdmin(false);  // Set user as non-admin
+                }
+              })
+              .catch(err => {
+                console.error("Error checking user role", err);
+              });
+
+            console.log(val2);
+            props.setcs(val2.cs);
+            props.setls(val2.ls);
+            props.setcis(val2.cis);
+            props.setds(val2.ds);
+            props.setdname(val2.ms);
+            props.setrefname(val2.rs);
+            setTimeout(() => {
+              props.setlogin("Admin");
+            }, 10);
           } else {
-            if (res.data.flag == "admin") {
-              console.log(val2)
-              props.setcs(val2.cs);
-              props.setls(val2.ls);
-              props.setcis(val2.cis);
-              props.setds(val2.ds);
-              props.setdname(val2.ms);
-              props.setrefname(val2.rs)
-              setTimeout(() => {
-                props.setlogin("Admin");
-              }, 10);
-            } else {
-              sessionStorage.clear();
-              navigate("/");
-            }
+            sessionStorage.clear();
+            navigate("/");
           }
         });
     }
   }, [props.login]);
 
-//refresh
+  // Refresh every 50 minutes
   useEffect(() => {
     const interval = setInterval(() => {
       sets(prev => prev + 1);  
@@ -67,107 +80,83 @@ function Home(props) {
   }, []);
 
   function display(event) {
-    event.target.disabled=true
-    setTimeout(()=>{event.target.disabled=false},2000)
+    event.target.disabled = true;
+    setTimeout(() => { event.target.disabled = false }, 2000);
     sets(s + 1);
   }
+
   function change(id, val) {
-    if (id == "client-select") {
+    if (id === "client-select") {
       props.setcs(val);
-      let val2=JSON.parse(sessionStorage.getItem("filter"))
-      val2.cs=val
+      let val2 = JSON.parse(sessionStorage.getItem("filter"));
+      val2.cs = val;
       sessionStorage.setItem("filter", JSON.stringify(val2));
-
-    } else if (id == "district-select") {
+    } else if (id === "district-select") {
       props.setds(val);
-      let val2=JSON.parse(sessionStorage.getItem("filter"))
-      val2.ds=val
+      let val2 = JSON.parse(sessionStorage.getItem("filter"));
+      val2.ds = val;
       sessionStorage.setItem("filter", JSON.stringify(val2));
-
-    } else if (id == "city-select") {
+    } else if (id === "city-select") {
       props.setcis(val);
-      let val2=JSON.parse(sessionStorage.getItem("filter"))
-      val2.cis=val
+      let val2 = JSON.parse(sessionStorage.getItem("filter"));
+      val2.cis = val;
       sessionStorage.setItem("filter", JSON.stringify(val2));
-    }
-    else if(id=="macid-select"){
+    } else if (id === "macid-select") {
       props.setdname(val);
-      let val2=JSON.parse(sessionStorage.getItem("filter"))
-      val2.ms=val
+      let val2 = JSON.parse(sessionStorage.getItem("filter"));
+      val2.ms = val;
       sessionStorage.setItem("filter", JSON.stringify(val2));
-
-    }
-    else if(id=="refid-select"){
+    } else if (id === "refid-select") {
       props.setrefname(val);
-      let val2=JSON.parse(sessionStorage.getItem("filter"))
-      val2.rs=val
+      let val2 = JSON.parse(sessionStorage.getItem("filter"));
+      val2.rs = val;
       sessionStorage.setItem("filter", JSON.stringify(val2));
-    }
-    else {
+    } else {
       props.setls(val);
-      let val2=JSON.parse(sessionStorage.getItem("filter"))
-      val2.ls=val
+      let val2 = JSON.parse(sessionStorage.getItem("filter"));
+      val2.ls = val;
       sessionStorage.setItem("filter", JSON.stringify(val2));
     }
   }
+
   return (
     <>
       <div className="search-bar">
-        <Client
-          change={change}
-          cs={props.cs}
-          login={props.login}
-        />
-        <District
-          ds={props.ds}
-          change={change}
-          login={props.login}
-        />
-        <City
-          cis={props.cis}
-          change={change}
-          login={props.login}
-        />
-        <Location
-          ls={props.ls}
-          change={change}
-          login={props.login}
-        />
-        <Macid dname={props.dname}
-        cs={props.cs}
-        ls={props.ls}
-          change={change}
-          ds={props.ds}
-          cis={props.cis}
-          refname={props.refname}
-          login={props.login}/>
-        <Refid dname={props.dname}
-        refname={props.refname}
-        cs={props.cs}
-        ls={props.ls}
-          change={change}
-          ds={props.ds}
-          cis={props.cis}
-          login={props.login}/>
+        <Client change={change} cs={props.cs} login={props.login} />
+        <District ds={props.ds} change={change} login={props.login} />
+        <City cis={props.cis} change={change} login={props.login} />
+        <Location ls={props.ls} change={change} login={props.login} />
+        <Macid dname={props.dname} cs={props.cs} ls={props.ls} change={change} ds={props.ds} cis={props.cis} refname={props.refname} login={props.login} />
+        <Refid dname={props.dname} refname={props.refname} cs={props.cs} ls={props.ls} change={change} ds={props.ds} cis={props.cis} login={props.login} />
         <button id="search-button" onClick={display}>
           Search/Reload
         </button>
-        </div>
-        <SensorCard
-          ok={props.ok}
-          s={s}
-          id_view={props.id_view}
-          ls={props.ls}
-          cs={props.cs}
-          ds={props.ds}
-          cis={props.cis}
-          isLf={props.isLf}
-          login={props.login}
-          dname={props.dname}
-          refname={props.refname}
-          sets={sets}
-        />
+        {/* View Records Button - Only visible for Admin */}
+      {isAdmin && (
+          <button className="btn btn-primary" id="view-records-button" onClick={() => navigate("/view-records")}>
+            View Records
+          </button>
+        )}
+      </div>
+      
+        
+
+      <SensorCard
+        ok={props.ok}
+        s={s}
+        id_view={props.id_view}
+        ls={props.ls}
+        cs={props.cs}
+        ds={props.ds}
+        cis={props.cis}
+        isLf={props.isLf}
+        login={props.login}
+        dname={props.dname}
+        refname={props.refname}
+        sets={sets}
+      />
     </>
   );
 }
+
 export default Home;

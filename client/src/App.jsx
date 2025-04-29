@@ -3,6 +3,7 @@ import Loader from "./loader";
 import Header from "./header";
 import Footer from "./Footer";
 import DeviceHistory from "./DeviceHistory";
+import ViewRecordsPage from "./ViewRecordsPage";
 import { AnimatePresence } from "framer-motion";
 // import Home from "./home";
 // import View from "./view";
@@ -48,6 +49,7 @@ function App() {
             <Route path="/details" element={<Details />} />
             <Route path="/details/:id" element={<Details />} />
             <Route path="/device-history/:id" element={<DeviceHistory />} />
+            <Route path="/view-records" element={<ViewRecordsPage />} />
           </Routes>
           <Footer />
         </>

@@ -16,18 +16,16 @@ function Adclient({ slide, here }) {
   const [done, setdone] = useState(-1);
   const [message, setmessage] = useState("");
   const [me, setme] = useState(0);
-  const [district, setDistrict] = useState([]);
-  const [city, setCity] = useState([]);
-  const [location, setLocation] = useState([]);
+  // const [district, setDistrict] = useState([]);
+  // const [city, setCity] = useState([]);
+  // const [location, setLocation] = useState([]);
   const [formValues, setFormValues] = useState({
     district: "",
     city: "",
     location: "",
-  });
-  const [dropdowns, setDropdowns] = useState({
-    district: false,
-    city: false,
-    location: false,
+    sector: "",
+    pincode: "",
+    state: "",
   });
 
   const handleInputChange = (event) => {
@@ -70,25 +68,6 @@ function Adclient({ slide, here }) {
       });
   };
 
-  const handleDropdownClick = (id, value) => {
-    setFormValues((prevValues) => ({
-      ...prevValues,
-      [id]: value,
-    }));
-    toggleDropdown(id, false);
-  };
-
-  const toggleDropdown = (id, state) => {
-    setDropdowns((prevDropdowns) => ({
-      ...prevDropdowns,
-      [id]: state,
-    }));
-    if (state) {
-      let eventt = { target: { id: id, value: "" } };
-      handleInputChange(eventt);
-    }
-  };
-
   function handleChange(event) {
     setmessage("");
     setFormData((prev) => ({
@@ -107,7 +86,7 @@ function Adclient({ slide, here }) {
   function adcl(event) {
     event.preventDefault();
     if (chaname === 1 && changing === 1 && checkpw === 1 && formData.login !== "" &&
-      ((formData.login === "Client" && formValues.district !== "" && formValues.location !== "" && formValues.city !== "") || (formData.login === "Admin"))) {
+      ((formData.login === "Client" && formValues.district !== "" && formValues.location !== "" && formValues.city !== "" &&formData.sector!==""&&formData.state!==""&&formData.pincode!=="") || (formData.login === "Admin"))) {
       const dataToSend = formData.login === "Client" ? { ...formData, ...formValues } : formData;
       axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/add2", dataToSend)
         .then(() => {
@@ -176,7 +155,7 @@ function Adclient({ slide, here }) {
       id="slider" onClick={(e) => hideall(e)}
       style={{
         position: "fixed",
-        top: 350,
+        top: 400,
         right: slide === 1 ? "0" : "-360px",
         height: "70vh",
         width: "100%",
@@ -201,8 +180,8 @@ function Adclient({ slide, here }) {
         <form id="contact-form" onSubmit={adcl}>
           <input
             name="username"
-            type="email"
-            placeholder="Enter username / email"
+            type="text"
+            placeholder="Enter username"
             id="username"
             onChange={handleChange}
             required
@@ -255,35 +234,53 @@ function Adclient({ slide, here }) {
               ) : (
                 <i className="fas fa-times-circle text-danger" style={nameStyle}></i>
               )}
-              <DropdownInput
+              <input
+                type="text"
+                placeholder="Enter District"
                 id="district"
-                label="Select District"
                 value={formValues.district}
-                options={district}
-                isOpen={dropdowns.district}
-                handleInputChange={handleInputChange}
-                handleDropdownClick={handleDropdownClick}
-                toggleDropdown={toggleDropdown}
+                onChange={handleInputChange}
+                required
               />
-              <DropdownInput
+              <input
+                type="text"
+                placeholder="Enter City"
                 id="city"
-                label="Select City"
                 value={formValues.city}
-                options={city}
-                isOpen={dropdowns.city}
-                handleInputChange={handleInputChange}
-                handleDropdownClick={handleDropdownClick}
-                toggleDropdown={toggleDropdown}
+                onChange={handleInputChange}
+                required
               />
-              <DropdownInput
+              <input
+                type="text"
+                placeholder="Enter Location"
                 id="location"
-                label="Select Location"
                 value={formValues.location}
-                options={location}
-                isOpen={dropdowns.location}
-                handleInputChange={handleInputChange}
-                handleDropdownClick={handleDropdownClick}
-                toggleDropdown={toggleDropdown}
+                onChange={handleInputChange}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Enter Sector"
+                id="sector"
+                value={formValues.sector}
+                onChange={handleInputChange}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Enter State"
+                id="state"
+                value={formValues.state}
+                onChange={handleInputChange}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Enter Pincode"
+                id="pincode"
+                value={formValues.pincode}
+                onChange={handleInputChange}
+                required
               />
             </>
           )}
@@ -312,39 +309,5 @@ const checkStyle = { marginLeft: "10px" };
 const pwStyle = { marginLeft: "10px" };
 const nameStyle = { marginLeft: "10px" };
 const submitButtonStyle = { backgroundColor: "#149ddd", border: "none", borderRadius: "4px", padding: "10px 20px" };
-
-function DropdownInput({ id, label, value, options, isOpen, handleInputChange, handleDropdownClick, toggleDropdown }) {
-  return (
-    <div className="dropdown" style={{ marginTop: "30px" }}>
-      <input
-        id={id}
-        type="text"
-        className="dropdown-toggle"
-        placeholder={label}
-        value={value}
-        onClick={() => toggleDropdown(id, true)}
-        onChange={handleInputChange}
-      />
-      {isOpen && (
-        <ul className="dropdown-menu" style={{ display: "block" }}>
-          {options.map((option, idx) => (
-            <li key={idx} onClick={() => handleDropdownClick(id, option)}>{option}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-DropdownInput.propTypes = {
-  id: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  options: PropTypes.arrayOf(PropTypes.string).isRequired,
-  isOpen: PropTypes.bool.isRequired,
-  handleInputChange: PropTypes.func.isRequired,
-  handleDropdownClick: PropTypes.func.isRequired,
-  toggleDropdown: PropTypes.func.isRequired,
-};
 
 export default Adclient;
