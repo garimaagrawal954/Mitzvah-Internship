@@ -132,11 +132,6 @@ function Home(props) {
           Search/Reload
         </button>
         {/* View Records Button - Only visible for Admin */}
-      {isAdmin && (
-          <button className="btn btn-primary" id="view-records-button" onClick={() => navigate("/view-records")}>
-            View Records
-          </button>
-        )}
       </div>
       
         
