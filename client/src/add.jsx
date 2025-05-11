@@ -4,16 +4,12 @@ import "./index.css";
 
 function Add(props) {
   const [client, setClient] = useState([]);
-  const [city, setCity] = useState([]);
-  const [district, setDistrict] = useState([]);
-  const [location, setLocation] = useState([]);
   const [flag, setFlag] = useState("");
   const [formValues, setFormValues] = useState({
     client: "",
-    macAddress: "",
-    device_name:"",
-    wifi_name:"",
-    wifi_pass:""
+    device_name: "",
+    wifi_name: "",
+    wifi_pass: ""
   });
   const [dropdowns, setDropdowns] = useState({
     client: false,
@@ -53,58 +49,53 @@ function Add(props) {
       ...prevDropdowns,
       [id]: state,
     }));
-    if(state){
-      let eventt={target:{id:id,value:""}}
-      handleInputChange(eventt)
+    if (state) {
+      let eventt = { target: { id: id, value: "" } };
+      handleInputChange(eventt);
     }
   };
+
   const checkAdd = (event) => {
     event.preventDefault();
-    const { client, macAddress, device_name,wifi_name,wifi_pass } = formValues;
+    const { client, device_name, wifi_name, wifi_pass } = formValues;
 
-    if (!client || !macAddress || !device_name ||!wifi_name || !wifi_pass) {
+    if (!client || !device_name || !wifi_name || !wifi_pass) {
       setFlag("Please fill all the fields");
-    } 
-    else if (macAddress.length !== 17) {
-      setFlag(
-        "Invalid Mac-Address Provided (Ensure there are no extra spaces before and after the written id)"
-      );
-    }
-    else if(device_name.length !== 8 || ! /^\d+$/.test(device_name)){
+    } else if (device_name.length !== 8 || !/^\d+$/.test(device_name)) {
       setFlag(
         "Invalid Device-name provided. Ensure the format is MMYYSSSS (M-> Month, Y-> Year, S-> Serial Number) and all the letters are digits only"
       );
-    }
-     else {
+    } else {
       axios
-        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/devicecheck", {
-          id: macAddress,device_name:device_name
+        .post("hhttps://mitzvah-software-for-smart-air-curtain.onrender.com/devicecheck", {
+          device_name: device_name
         })
         .then((res) => {
-          if (res.data != "Ok") {
-            // console.log(res.data);
+          if (res.data !== "Ok") {
             setFlag(res.data);
           } else {
             axios
               .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/add-data", formValues)
-              .then((res) => {setFlag("Device Added Successfully")})
-              .catch((err) => setFlag("Some Error Occured!"));
+              .then(() => setFlag("Device Added Successfully"))
+              .catch(() => setFlag("Some Error Occured!"));
           }
         });
     }
   };
+
   function hideall(event) {
-    if (event.target.id == "" || event.target.id == "header") {
+    if (event.target.id === "" || event.target.id === "header") {
       toggleDropdown("client", false);
     }
   }
+
   return (
     <div
       id="slider"
       style={props.slide === 1 ? { right: "0px" } : { right: "-360px" }}
       onClick={hideall}
     >
-      <div id="header" style={{ height: '400px', overflowY:'auto' }}>
+      <div id="header" style={{ height: '400px', overflowY: 'auto' }}>
         <h2 onClick={props.here}>
           <i
             id="Cross"
@@ -141,15 +132,7 @@ function Add(props) {
               </div>
             )}
           </div>
-          <input
-            name="dname"
-            type="text"
-            placeholder="Enter Mac-address"
-            id="macAddress"
-            value={formValues.macAddress}
-            onChange={handleInputChange}
-            required
-          />
+
           <input
             name="dname"
             type="text"
@@ -179,7 +162,7 @@ function Add(props) {
           />
           <p
             style={
-              flag != "Device Added Successfully"
+              flag !== "Device Added Successfully"
                 ? { color: "red" }
                 : { color: "green" }
             }

@@ -15,7 +15,7 @@ import {
   UpdateCommand,
   QueryCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { DynamoDB } from "@aws-sdk/client-dynamodb";
+import { DynamoDB,ScanCommand,DynamoDBClient } from "@aws-sdk/client-dynamodb";
 const app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -306,31 +306,67 @@ app.post("/check-power", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+import { v4 as uuidv4 } from "uuid";
+
 app.post("/add-data", async (req, res) => {
-  var dynamoDB = DynamoDBDocument.from(
-    new DynamoDB({
-      region: aws_region,
-      credentials: {
-        accessKeyId: my_AWSAccessKeyId,
-        secretAccessKey: my_AWSSecretKey,
-      },
-    })
-  );
-  const command = new PutCommand( {
-    TableName: empTable3,
-    Item: {
-      uniqueId:req.body.macAddress,
-      client_select:req.body.client,
-      "device-name":req.body.device_name,
-      "wifi_name":req.body.wifi_name,
-      "wifi_password":req.body.wifi_pass,
-      "timestamp": new Date().toISOString(),
+  const dynamoDBClient = new DynamoDBClient({
+    region: aws_region,
+    credentials: {
+      accessKeyId: my_AWSAccessKeyId,
+      secretAccessKey: my_AWSSecretKey,
     },
   });
 
-  const response = await dynamoDB.send(command);
-  res.send("Done")
+  const dynamoDB = DynamoDBDocument.from(dynamoDBClient);
+
+  try {
+    // Step 1: Scan the table for all device_id values
+    const scanCommand = new ScanCommand({
+      TableName: empTable3,
+      ProjectionExpression: "device_id",
+    });
+
+    const scanResult = await dynamoDBClient.send(scanCommand);
+
+    let maxId = 0;
+    if (scanResult.Items) {
+      for (const item of scanResult.Items) {
+        const id = parseInt(item.device_id);
+        if (!isNaN(id) && id > maxId) {
+          maxId = id;
+        }
+      }
+    }
+
+    const newDeviceId = maxId + 1;
+
+    // Step 2: Prepare the item
+    const uniqueId = req.body.macAddress?.trim() || uuidv4();
+
+    const item = {
+      uniqueId,
+      device_id: newDeviceId,
+      client_select: req.body.client,
+      "device-name": req.body.device_name,
+      wifi_name: req.body.wifi_name,
+      wifi_password: req.body.wifi_pass,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Step 3: Save new item
+    const putCommand = new PutCommand({
+      TableName: empTable3,
+      Item: item,
+    });
+
+    await dynamoDB.send(putCommand);
+    res.send("Done");
+  } catch (error) {
+    console.error("DynamoDB Error:", error);
+    res.status(500).send("Error adding data");
+  }
 });
+
 app.post("/get-name", async (req, res) => {
   var params = {
     TableName: empTable2,
