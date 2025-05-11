@@ -308,6 +308,64 @@ app.post("/check-power", async (req, res) => {
 });
 import { v4 as uuidv4 } from "uuid";
 
+// app.post("/add-data", async (req, res) => {
+//   const dynamoDBClient = new DynamoDBClient({
+//     region: aws_region,
+//     credentials: {
+//       accessKeyId: my_AWSAccessKeyId,
+//       secretAccessKey: my_AWSSecretKey,
+//     },
+//   });
+
+//   const dynamoDB = DynamoDBDocument.from(dynamoDBClient);
+
+//   try {
+//     // Step 1: Scan the table for all device_id values
+//     const scanCommand = new ScanCommand({
+//       TableName: empTable3,
+//       ProjectionExpression: "device_id",
+//     });
+
+//     const scanResult = await dynamoDBClient.send(scanCommand);
+
+//     let maxId = 0;
+//     if (scanResult.Items) {
+//       for (const item of scanResult.Items) {
+//         const id = parseInt(item.device_id);
+//         if (!isNaN(id) && id > maxId) {
+//           maxId = id;
+//         }
+//       }
+//     }
+
+//     const newDeviceId = maxId + 1;
+
+//     // Step 2: Prepare the item
+//     const uniqueId = req.body.macAddress?.trim() || uuidv4();
+
+//     const item = {
+//       uniqueId,
+//       device_id: newDeviceId,
+//       client_select: req.body.client,
+//       "device-name": req.body.device_name,
+//       wifi_name: req.body.wifi_name,
+//       wifi_password: req.body.wifi_pass,
+//       timestamp: new Date().toISOString(),
+//     };
+
+//     // Step 3: Save new item
+//     const putCommand = new PutCommand({
+//       TableName: empTable3,
+//       Item: item,
+//     });
+
+//     await dynamoDB.send(putCommand);
+//     res.send("Done");
+//   } catch (error) {
+//     console.error("DynamoDB Error:", error);
+//     res.status(500).send("Error adding data");
+//   }
+// });
 app.post("/add-data", async (req, res) => {
   const dynamoDBClient = new DynamoDBClient({
     region: aws_region,
@@ -320,13 +378,13 @@ app.post("/add-data", async (req, res) => {
   const dynamoDB = DynamoDBDocument.from(dynamoDBClient);
 
   try {
-    // Step 1: Scan the table for all device_id values
+    // Step 1: Scan to get existing device_id values
     const scanCommand = new ScanCommand({
       TableName: empTable3,
       ProjectionExpression: "device_id",
     });
 
-    const scanResult = await dynamoDBClient.send(scanCommand);
+    const scanResult = await dynamoDB.send(scanCommand);
 
     let maxId = 0;
     if (scanResult.Items) {
@@ -353,7 +411,7 @@ app.post("/add-data", async (req, res) => {
       timestamp: new Date().toISOString(),
     };
 
-    // Step 3: Save new item
+    // Step 3: Insert into DynamoDB
     const putCommand = new PutCommand({
       TableName: empTable3,
       Item: item,
@@ -366,7 +424,6 @@ app.post("/add-data", async (req, res) => {
     res.status(500).send("Error adding data");
   }
 });
-
 app.post("/get-name", async (req, res) => {
   var params = {
     TableName: empTable2,
