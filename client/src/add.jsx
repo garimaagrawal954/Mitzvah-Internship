@@ -67,7 +67,7 @@ function Add(props) {
       );
     } else {
       axios
-        .post("hhttps://mitzvah-software-for-smart-air-curtain.onrender.com/devicecheck", {
+        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/devicecheck", {
           device_name: device_name
         })
         .then((res) => {
