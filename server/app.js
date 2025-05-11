@@ -395,6 +395,7 @@ app.post("/add-data", async (req, res) => {
         }
       }
     }
+    console.log(maxId);
 
     const newDeviceId = maxId + 1;
 
