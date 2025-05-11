@@ -14,8 +14,9 @@ import {
   DeleteCommand,
   UpdateCommand,
   QueryCommand,
+  ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { DynamoDB,ScanCommand,DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDB,DynamoDBClient } from "@aws-sdk/client-dynamodb";
 const app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -378,7 +379,7 @@ app.post("/add-data", async (req, res) => {
   const dynamoDB = DynamoDBDocument.from(dynamoDBClient);
 
   try {
-    // Step 1: Scan to get existing device_id values
+    // Step 1: Scan table for all device_id values
     const scanCommand = new ScanCommand({
       TableName: empTable3,
       ProjectionExpression: "device_id",
@@ -386,22 +387,23 @@ app.post("/add-data", async (req, res) => {
 
     const scanResult = await dynamoDB.send(scanCommand);
 
+    // Step 2: Find the maximum device_id
     let maxId = 0;
     if (scanResult.Items) {
       for (const item of scanResult.Items) {
-        const id = parseInt(item.device_id);
-        if (!isNaN(id) && id > maxId) {
+        const id = item.device_id;
+        if (typeof id === "number" && id > maxId) {
           maxId = id;
         }
       }
     }
-    console.log(maxId);
 
     const newDeviceId = maxId + 1;
 
-    // Step 2: Prepare the item
+    // Step 3: Set uniqueId
     const uniqueId = req.body.macAddress?.trim() || uuidv4();
 
+    // Step 4: Construct the item
     const item = {
       uniqueId,
       device_id: newDeviceId,
@@ -412,13 +414,14 @@ app.post("/add-data", async (req, res) => {
       timestamp: new Date().toISOString(),
     };
 
-    // Step 3: Insert into DynamoDB
+    // Step 5: Insert into DynamoDB
     const putCommand = new PutCommand({
       TableName: empTable3,
       Item: item,
     });
 
     await dynamoDB.send(putCommand);
+
     res.send("Done");
   } catch (error) {
     console.error("DynamoDB Error:", error);
