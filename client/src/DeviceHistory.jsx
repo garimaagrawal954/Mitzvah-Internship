@@ -13,46 +13,63 @@ const fetchData = async (uniqueId, startDate, endDate) => {
 
   const response = await fetch(url);
   const data = await response.json();
-  console.log("Fetched data:", data);
+  console.log("Fetched data.", data);
   return data.items;
 };
 
 function DeviceHistory() {
-  const { id } = useParams(); // Get device ID from URL
+  const { id } = useParams();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [deviceName, setDeviceName] = useState(''); // NEW
 
   // Convert date string to Unix timestamp (milliseconds)
   const convertToTimestamp = (dateStr) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
-    return date.getTime(); // Return the timestamp in milliseconds
+    return date.getTime();
   };
 
+  // Fetch history and device name
   useEffect(() => {
-    const fetchDeviceHistory = async () => {
+    const fetchDeviceInformation = async () => {
       try {
         setLoading(true);
+        // First fetch history
         const startTimestamp = convertToTimestamp(startDate);
         const endTimestamp = convertToTimestamp(endDate);
         const data = await fetchData(id, startTimestamp, endTimestamp);
         setHistory(data);
+
+        // Then fetch the device's name
+        const res = await fetch("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dname: id })
+        });
+        const resData = await res.json();
+
+        if (resData.length > 0) {
+          setDeviceName(resData[0]["device-name"]);
+        } else {
+          setDeviceName(id);
+        }
       } catch (error) {
-        console.error("Error fetching device history:", error);
+        console.error("Error fetching device history.", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDeviceHistory();
-  }, [id, startDate, endDate]); // Re-fetch data when ID or date filters change
+    fetchDeviceInformation();
+  }, [id, startDate, endDate]);
 
-  // 🔍 Filter and sort by date descending
+  // Filter and sort by date descending
   const filteredData = history
     .filter((item) => {
-      const itemDate = new Date(item.current_dt); // Item date is in Unix timestamp (current_dt)
+      const itemDate = new Date(item.current_dt);
       const itemTimestamp = itemDate.getTime();
 
       // Apply filters if dates are set
@@ -61,44 +78,49 @@ function DeviceHistory() {
 
       if (start && itemTimestamp < start) return false;
       if (end && itemTimestamp > end) return false;
+
       return true;
     })
-    .sort((a, b) => new Date(b.current_dt) - new Date(a.current_dt)); // Most recent first
+    .sort((a, b) => new Date(b.current_dt) - new Date(a.current_dt));
 
   const downloadPDF = () => {
     const doc = new jsPDF();
 
-    doc.text(`Filtered Report - Device ${id}`, 14, 10);
+    doc.text(`Filtered Report - Device ${deviceName}`, 14, 10);
 
     autoTable(doc, {
       startY: 20,
-      head: [["Date", "Head Count", "Indoor Temp", "Outdoor Temp", "Power", "RPM", "Failed"]],
+      head: [
+        [
+          "Date",
+          "Head Count",
+          "Indoor Temp",
+          "Outdoor Temp",
+          "Power",
+          "RPM",
+          "Failed",
+        ],
+      ],
       body: filteredData.map((item) => [
-        new Date(item.current_dt).toLocaleDateString(), // Format Unix timestamp to readable date
-        item.Head_Count,  // Mapped to Head Count
-        item.Indoor_Temp,  // Mapped to Indoor Temp
-        item.Outdoor_Temp,  // Mapped to Outdoor Temp
-        item.Power,  // Mapped to Power
-        item.RPM,    // Mapped to RPM
-        item.Failed_Device ? "Yes" : "No",  // Mapped to Failed status (if Failed_Device is empty, it will show "No")
+        new Date(item.current_dt).toLocaleDateString(), // Format timestamp to readable
+        item.Head_Count,
+        item.Indoor_Temp,
+        item.Outdoor_Temp,
+        item.Power,
+        item.RPM,
+        item.Failed_Device ? "Yes" : "No",
       ]),
     });
 
-    doc.save(`device-${id}-filtered-history.pdf`);
+    doc.save(`device-${deviceName}-filtered-history.pdf`);
   };
 
   if (loading) return <p style={{ padding: "20px" }}>Loading ⏳...</p>;
 
   return (
     <div
-      style={{
-        padding: "20px",
-        fontFamily: "Arial, sans-serif",
-        backgroundColor: "#f9f9f9",
-        minHeight: "100vh",
-      }}
-    >
-      <h2 style={{ color: "#333" }}>History of device - {id}</h2>
+      style={{ padding: "20px", fontFamily: "Arial, sans-serif", backgroundColor: "#f9f9f9", minHeight: "100vh" }}>
+      <h2 style={{ color: "#333" }}>History of device - {deviceName}</h2>
 
       {/* 🔍 Date Filter Inputs */}
       <div style={{ marginBottom: "20px" }}>
@@ -122,46 +144,44 @@ function DeviceHistory() {
 
       <button
         onClick={downloadPDF}
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#4CAF50",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          marginTop: "10px",
-          marginBottom: "20px",
-          cursor: "pointer",
-        }}
-      >
+        style={{ padding: "10px 20px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "5px", marginBottom: "20px", cursor: "pointer" }}>
         Download Filtered PDF
       </button>
 
       <div style={{ overflowX: "auto" }}>
         <table
-          style={{
-            marginBottom: "70px",
-            width: "100%",
-            borderCollapse: "collapse",
-            backgroundColor: "#fff",
-            color: "#000",
-            boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-          }}
-        >
+          style={{ marginBottom: "70px", width: "100%", borderCollapse: "collapse", backgroundColor: "#fff", color: "#000", boxShadow: "0 0 10px rgb(0 0 0 / 0.1)" }}>
           <thead>
             <tr>
-              <th style={thStyle}>Date</th>
-              <th style={thStyle}>Head Count</th>
-              <th style={thStyle}>Indoor Temp</th>
-              <th style={thStyle}>Outdoor Temp</th>
-              <th style={thStyle}>Power</th>
-              <th style={thStyle}>RPM</th>
-              <th style={thStyle}>Failed</th>
+              <th style={thStyle}>
+                Date
+              </th>
+              <th style={thStyle}>
+                Head Count
+              </th>
+              <th style={thStyle}>
+                Indoor Temp
+              </th>
+              <th style={thStyle}>
+                Outdoor Temp
+              </th>
+              <th style={thStyle}>
+                Power
+              </th>
+              <th style={thStyle}>
+                RPM
+              </th>
+              <th style={thStyle}>
+                Failed
+              </th>
             </tr>
           </thead>
           <tbody>
             {filteredData.map((item, index) => (
               <tr key={index}>
-                <td style={tdStyle}>{new Date(item.current_dt).toLocaleDateString()}</td>
+                <td style={tdStyle}>
+                    {new Date(item.current_dt).toLocaleDateString()}
+                </td>
                 <td style={tdStyle}>{item.Head_Count}</td>
                 <td style={tdStyle}>{item.Indoor_Temp}°C</td>
                 <td style={tdStyle}>{item.Outdoor_Temp}°C</td>
