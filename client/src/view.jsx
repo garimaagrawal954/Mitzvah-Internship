@@ -95,7 +95,7 @@ function View(props) {
         <div className="card-container">
           <div className="device-id">
             <h2 style={{ marginLeft: "-30px", display: "inline" }}>
-              Device ID: <span className="id-text">{deviceName || ''}</span>
+              Device ID: <span className="">{deviceName || ''}</span>
             </h2>
             <i className="fas fa-circle" style={{ color: isStatusOn ? "green" : "red", marginLeft: "60px", fontSize: "10px" }}></i>
             <h4 style={{ color: isStatusOn ? "green" : "red", display: "inline", marginLeft: "5px", fontFamily: "cursive" }}>
