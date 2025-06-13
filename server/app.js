@@ -367,67 +367,98 @@ import { v4 as uuidv4 } from "uuid";
 //     res.status(500).send("Error adding data");
 //   }
 // });
-app.post("/add-data", async (req, res) => {
-  const dynamoDBClient = new DynamoDBClient({
-    region: aws_region,
-    credentials: {
-      accessKeyId: my_AWSAccessKeyId,
-      secretAccessKey: my_AWSSecretKey,
+
+
+// app.post("/add-data", async (req, res) => {
+//   const dynamoDBClient = new DynamoDBClient({
+//     region: aws_region,
+//     credentials: {
+//       accessKeyId: my_AWSAccessKeyId,
+//       secretAccessKey: my_AWSSecretKey,
+//     },
+//   });
+
+//   const dynamoDB = DynamoDBDocument.from(dynamoDBClient);
+
+//   try {
+//     // Step 1: Scan table for all device_id values
+//     const scanCommand = new ScanCommand({
+//       TableName: empTable3,
+//       ProjectionExpression: "device_id",
+//     });
+
+//     const scanResult = await dynamoDB.send(scanCommand);
+
+//     // Step 2: Find the maximum device_id
+//     let maxId = 0;
+//     if (scanResult.Items) {
+//       for (const item of scanResult.Items) {
+//         const id = item.device_id;
+//         if (typeof id === "number" && id > maxId) {
+//           maxId = id;
+//         }
+//       }
+//     }
+
+//     const newDeviceId = maxId + 1;
+
+//     // Step 3: Set uniqueId
+//     const uniqueId = req.body.macAddress?.trim() || uuidv4();
+
+//     // Step 4: Construct the item
+//     const item = {
+//       uniqueId,
+//       device_id: newDeviceId,
+//       client_select: req.body.client,
+//       "device-name": req.body.device_name,
+//       wifi_name: req.body.wifi_name,
+//       wifi_password: req.body.wifi_pass,
+//       timestamp: new Date().toISOString(),
+//     };
+
+//     // Step 5: Insert into DynamoDB
+//     const putCommand = new PutCommand({
+//       TableName: empTable3,
+//       Item: item,
+//     });
+
+//     await dynamoDB.send(putCommand);
+
+//     res.send("Done");
+//   } catch (error) {
+//     console.error("DynamoDB Error:", error);
+//     res.status(500).send("Error adding data");
+//   }
+// });
+
+app.post("/add-data", async (req, res) => {//adding new client device
+
+  var dynamoDB = DynamoDBDocument.from(
+    new DynamoDB({
+      region: aws_region,
+      credentials: {
+        accessKeyId: my_AWSAccessKeyId,
+        secretAccessKey: my_AWSSecretKey,
+      },
+    })
+  );
+  const command = new PutCommand( {
+    TableName: empTable3,
+    Item: {
+      uniqueId:req.body.macAddress,
+      client_select:req.body.client,
+      "device-name":req.body.device_name,
+      "wifi_name":req.body.wifi_name,
+      "wifi_password":req.body.wifi_pass,
+      "timestamp": new Date().toISOString(),
     },
   });
 
-  const dynamoDB = DynamoDBDocument.from(dynamoDBClient);
-
-  try {
-    // Step 1: Scan table for all device_id values
-    const scanCommand = new ScanCommand({
-      TableName: empTable3,
-      ProjectionExpression: "device_id",
-    });
-
-    const scanResult = await dynamoDB.send(scanCommand);
-
-    // Step 2: Find the maximum device_id
-    let maxId = 0;
-    if (scanResult.Items) {
-      for (const item of scanResult.Items) {
-        const id = item.device_id;
-        if (typeof id === "number" && id > maxId) {
-          maxId = id;
-        }
-      }
-    }
-
-    const newDeviceId = maxId + 1;
-
-    // Step 3: Set uniqueId
-    const uniqueId = req.body.macAddress?.trim() || uuidv4();
-
-    // Step 4: Construct the item
-    const item = {
-      uniqueId,
-      device_id: newDeviceId,
-      client_select: req.body.client,
-      "device-name": req.body.device_name,
-      wifi_name: req.body.wifi_name,
-      wifi_password: req.body.wifi_pass,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Step 5: Insert into DynamoDB
-    const putCommand = new PutCommand({
-      TableName: empTable3,
-      Item: item,
-    });
-
-    await dynamoDB.send(putCommand);
-
-    res.send("Done");
-  } catch (error) {
-    console.error("DynamoDB Error:", error);
-    res.status(500).send("Error adding data");
-  }
+  const response = await dynamoDB.send(command);
+  res.send("Done")
 });
+
+
 app.post("/get-name", async (req, res) => {
   var params = {
     TableName: empTable2,
