@@ -7,6 +7,7 @@ function View(props) {
   const navigate = useNavigate();
   const [data, setdata] = useState([]);
   const [con, setcon] = useState("");
+  const [deviceName, setDeviceName] = useState('');
 
   function chit() {
     let i = document.getElementById("status").innerText;
@@ -41,20 +42,35 @@ function View(props) {
 
     if (props.login === "Out") {
       navigate("/home");
+
     } else {
+      // fetch connection info
       axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/checki", {
         id: props.id_view
       }).then((res) => {
         setcon(res.data);
       });
 
+      // fetch data
       axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/find", props).then((res) => {
         setdata(res.data);
       });
+
+      // fetch device-name from new API
+      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", {
+        dname: props.id_view
+      })
+        .then((res) => {
+          if (res.data.length && res.data[0]) {
+            setDeviceName(res.data[0]["device-name"]);
+          }
+        })
+        .catch((err) => console.error(err));
+
     }
 
     return () => clearInterval(interval);
-  }, []);
+  }, [props]);
 
   useEffect(() => {
     if (data[0] && data[0].Power !== undefined) {
@@ -79,7 +95,7 @@ function View(props) {
         <div className="card-container">
           <div className="device-id">
             <h2 style={{ marginLeft: "-30px", display: "inline" }}>
-              Device ID: <span className="id-text">{data[0]["uniqueId"]}</span>
+              Device ID: <span className="id-text">{deviceName || ''}</span>
             </h2>
             <i className="fas fa-circle" style={{ color: isStatusOn ? "green" : "red", marginLeft: "60px", fontSize: "10px" }}></i>
             <h4 style={{ color: isStatusOn ? "green" : "red", display: "inline", marginLeft: "5px", fontFamily: "cursive" }}>
