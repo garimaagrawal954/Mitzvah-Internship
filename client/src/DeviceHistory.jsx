@@ -3,6 +3,9 @@ import { useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// FileSaver for CSV
+import { saveAs } from "file-saver";
+
 // Fetch data from API
 const fetchData = async (uniqueId, startDate, endDate) => {
   const url = new URL(`https://mitzvah-software-for-smart-air-curtain.onrender.com/items/${uniqueId}`);
@@ -12,27 +15,29 @@ const fetchData = async (uniqueId, startDate, endDate) => {
   }
 
   const response = await fetch(url);
-  const data = await response.json();
-  console.log("Fetched data.", data);
-  return data.items;
+  return response.json();
 };
 
 function DeviceHistory() {
   const { id } = useParams();
+
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [deviceName, setDeviceName] = useState(''); // NEW
-
-  // Convert date string to Unix timestamp (milliseconds)
+  const [deviceName, setDeviceName] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [location, setLocation] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  
+  // Convert date string to timestamp
   const convertToTimestamp = (dateStr) => {
     if (!dateStr) return null;
-    const date = new Date(dateStr);
-    return date.getTime();
+    return new Date(dateStr).getTime();
   };
 
-  // Fetch history and device name
+  // Fetch history and device info
   useEffect(() => {
     const fetchDeviceInformation = async () => {
       try {
@@ -41,9 +46,9 @@ function DeviceHistory() {
         const startTimestamp = convertToTimestamp(startDate);
         const endTimestamp = convertToTimestamp(endDate);
         const data = await fetchData(id, startTimestamp, endTimestamp);
-        setHistory(data);
+        setHistory(data.items);
 
-        // Then fetch the device's name
+        // Then fetch the device's info
         const res = await fetch("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -53,6 +58,10 @@ function DeviceHistory() {
 
         if (resData.length > 0) {
           setDeviceName(resData[0]["device-name"]);
+          setClientName(resData[0]["client_select"]);
+          setLocation(resData[0]["location"]);
+          setCity(resData[0]["city"]);
+          setState(resData[0]["state"]);
         } else {
           setDeviceName(id);
         }
@@ -83,13 +92,21 @@ function DeviceHistory() {
     })
     .sort((a, b) => new Date(b.current_dt) - new Date(a.current_dt));
 
+  // Generate PDF
   const downloadPDF = () => {
     const doc = new jsPDF();
 
-    doc.text(`Filtered Report - Device ${deviceName}`, 14, 10);
+    // Title
+    
+    doc.text(`Mitzvah Engg. (India) Pvt. Ltd. `, 105, 10, { align: "center" });
+    doc.text(`Smart Air Curtain `, 105, 20, { align: "center" });
+    doc.text(`Client Name: ${clientName}`, 20, 30);
+    doc.text(`Device Name: ${deviceName}`, 20, 40);
+    doc.text(`Location: ${location},${city},${state}`, 20, 50);
 
+    // Table
     autoTable(doc, {
-      startY: 20,
+      startY: 60,
       head: [
         [
           "Date",
@@ -109,18 +126,45 @@ function DeviceHistory() {
         item.Power,
         item.RPM,
         item.Failed_Device ? "Yes" : "No",
-      ]),
+      ])
     });
 
     doc.save(`device-${deviceName}-filtered-history.pdf`);
+  };
+
+  // Generate CSV
+  const exportCSV = () => {
+    const rows = [
+      ['Date', 'Head Count', 'Indoor Temp', 'Outdoor Temp', 'Power', 'RPM', 'Failed'].join(',')
+    ];
+
+    filteredData.forEach((item) => {
+      rows.push([
+        new Date(item.current_dt).toLocaleDateString(), // Format timestamp to readable
+        item.Head_Count,
+        item.Indoor_Temp,
+        item.Outdoor_Temp,
+        item.Power,
+        item.RPM,
+        item.Failed_Device ? "Yes" : "No",
+      ].join(','));
+    });
+
+    const csvContent = rows.join('\n');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    saveAs(blob, `device-${deviceName}-filtered-history.csv`);
   };
 
   if (loading) return <p style={{ padding: "20px" }}>Loading ⏳...</p>;
 
   return (
     <div
-      style={{ padding: "20px", fontFamily: "Arial, sans-serif", backgroundColor: "#f9f9f9", minHeight: "100vh" }}>
-      <h2 style={{ color: "#333" }}>History of device - {deviceName}</h2>
+      style={{ padding: "20px", fontFamily: "Helvetica, Arial, sans-serif", backgroundColor: "#f9f9f9", minHeight: "100vh" }}>
+      <h2 style={{ color: "#333" }}>Device History</h2>
+
+      <h3>Client Name: {clientName}</h3>
+      <h3>Device Name: {deviceName}</h3>
+      <h3>Location: {location},{city},{state}</h3>
 
       {/* 🔍 Date Filter Inputs */}
       <div style={{ marginBottom: "20px" }}>
@@ -144,71 +188,71 @@ function DeviceHistory() {
 
       <button
         onClick={downloadPDF}
-        style={{ padding: "10px 20px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "5px", marginBottom: "20px", cursor: "pointer" }}>
+        style={{ padding: "10px 20px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "5px", marginBottom: "20px", marginRight:'10px', cursor: "pointer" }}>
         Download Filtered PDF
       </button>
 
+      <button
+        onClick={exportCSV}
+        style={{ padding: "10px 20px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "5px", marginBottom: "20px", cursor: "pointer" }}>
+        Export CSV
+      </button>
+
+      {/* Filtered Data Table */}
       <div style={{ overflowX: "auto" }}>
         <table
-          style={{ marginBottom: "70px", width: "100%", borderCollapse: "collapse", backgroundColor: "#fff", color: "#000", boxShadow: "0 0 10px rgb(0 0 0 / 0.1)" }}>
-          <thead>
+          style={{ 
+            marginBottom: "70px",
+            width: "100%", 
+            borderCollapse: "collapse", 
+            backgroundColor: "#fff", 
+            color: "#000", 
+            boxShadow: "0 4px 14px rgb(0 0 0 / 0.1)", 
+            borderRadius: "12px",
+            overflow: "hidden"
+          }}>
+          <thead style={{ backgroundColor: "#4CAF50", color: "white" }}>
             <tr>
-              <th style={thStyle}>
-                Date
-              </th>
-              <th style={thStyle}>
-                Head Count
-              </th>
-              <th style={thStyle}>
-                Indoor Temp
-              </th>
-              <th style={thStyle}>
-                Outdoor Temp
-              </th>
-              <th style={thStyle}>
-                Power
-              </th>
-              <th style={thStyle}>
-                RPM
-              </th>
-              <th style={thStyle}>
-                Failed
-              </th>
+              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Date</th>
+              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Head Count</th>
+              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Indoor Temp</th>
+              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Outdoor Temp</th>
+              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Power</th>
+              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>RPM</th>
+              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Failed</th>
             </tr>
           </thead>
           <tbody>
-            {filteredData.map((item, index) => (
-              <tr key={index}>
-                <td style={tdStyle}>
-                    {new Date(item.current_dt).toLocaleDateString()}
-                </td>
-                <td style={tdStyle}>{item.Head_Count}</td>
-                <td style={tdStyle}>{item.Indoor_Temp}°C</td>
-                <td style={tdStyle}>{item.Outdoor_Temp}°C</td>
-                <td style={tdStyle}>{item.Power} W</td>
-                <td style={tdStyle}>{item.RPM}</td>
-                <td style={tdStyle}>{item.Failed_Device ? "Yes" : "No"}</td>
+            {filteredData.length > 0 ? (
+              filteredData.map((item, index) => (
+                <tr
+                    key={index}
+                    style={{ 
+                      backgroundColor: index % 2 === 0 ? "#f5f5f5" : "#ffffff", 
+                      transition: "background-color 0.3s ease" 
+                    }}>
+                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>
+                      {new Date(item.current_dt).toLocaleDateString()}
+                    </td>
+                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Head_Count}</td>
+                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Indoor_Temp}°C</td>
+                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Outdoor_Temp}°C</td>
+                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Power} W</td>
+                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.RPM}</td>
+                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Failed_Device ? "Yes" : "No"}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="7" style={{ padding: "20px", textAlign: "center" }}>No data found for this range</td>
               </tr>
-            ))}
+            )}
+
           </tbody>
         </table>
       </div>
     </div>
   );
 }
-
-const thStyle = {
-  border: "1px solid #ccc",
-  padding: "10px",
-  backgroundColor: "#f0f0f0",
-  textAlign: "center",
-};
-
-const tdStyle = {
-  border: "1px solid #ddd",
-  padding: "10px",
-  textAlign: "center",
-  fontFamily: "monospace",
-};
 
 export default DeviceHistory;
