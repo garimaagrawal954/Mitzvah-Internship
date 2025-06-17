@@ -131,7 +131,7 @@ function SensorCard(props) {
                     id="view-records-button"
                     onClick={() => navigate("/view-records")}  
                     style={{ 
-                    padding: "5px 15px 5px 5p",
+                    padding: "5px 15px 5px 5px",
                     fontSize: "14px",
                     whiteSpace: "nowrap"
                     }}>
