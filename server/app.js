@@ -573,6 +573,40 @@ app.post("/devicecheck", function (req, res) {
     }
   });
 });
+
+app.post("/check-emergency", async (req, res) => {
+  const deviceId = req.body.id;
+
+  // STEP 1: Fetch current item
+  const getParams = {
+    TableName: empTable1,
+    Key: {
+      uniqueId: deviceId,
+    },
+  };
+
+  try {
+    const rsp = await DynamoDBDocumentClient.from(dynamoDB).send(
+      new GetCommand(getParams)
+    );
+
+    if (!rsp || !rsp.Item) {
+      return res.status(404).send("Device not found.");
+    }
+
+    // STEP 2: Check if emergency
+    if (rsp.Item.DST == 1) {
+      res.send({ emergency: true });
+    } else {
+      res.send({ emergency: false });
+    }
+  } catch (err) {
+    console.error("Error checking emergency.", err);
+    res.status(500).send("Internal server error.");
+  }
+});
+
+
 app.post("/device-select", async function (req, res) {
   let ans = [];
   let new_ans = [];
