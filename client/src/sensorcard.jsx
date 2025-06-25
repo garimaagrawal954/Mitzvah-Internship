@@ -1,11 +1,10 @@
-import React, { useEffect, useState, memo } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { NavLink, useNavigate } from "react-router-dom";
 
 function SensorCard(props) {
   const [stat, setStat] = useState([]);
   const [statCpy, setStatCpy] = useState([]);
-
   const navigate = useNavigate();
 
   function viewit(event) {
@@ -16,85 +15,84 @@ function SensorCard(props) {
     if (props.login === "Client" || props.login === "Admin") {
       document.getElementById("all").checked = true;
 
-      setStat([]);
-      setStatCpy([]);
+      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", props).then(async (res) => {
+        const deviceList = res.data;
+        const newStat = [];
+        const newStatCpy = [];
 
-      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", props).then((res) => {
-        res.data.map((ele) => {
-          // First fetch main details
-          axios
-            .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/find", { id_view: ele.uniqueId })
-            .then((resu) => {
-              // Then fetch emergency info
-              axios
-                .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/check-emergency", { id: ele.uniqueId })
-                .then((nres) => {
-                    setStat((prev) => [
-                    ...prev,
-                    {
-                      [ele.uniqueId]: [
-                        Object.assign(resu.data[0] || {}, ele, {
-                          status: nres.data[0],
-                          fanstatus: nres.data[1],
-                          enum: nres.data.emergency,
-                        }),
-                      ],
-                    },
-                    ]);
-                    setStatCpy((previ) => [
-                    ...previ,
-                    {
-                      [ele.uniqueId]: [Object.assign(resu.data[0] || {}, ele, { enum: nres.data.emergency})],
-                    },
-                    ]);
-                })
-                .catch((err) => console.error(err));
+        await Promise.all(
+          deviceList.map(async (ele) => {
+            try {
+              const resu = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/find", { id_view: ele.uniqueId });
+              const nres = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/check-emergency", { id: ele.uniqueId });
+              const cres = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/checki", { id: ele.uniqueId });
 
-            })
-            .catch((err) => console.error(err));
+              const merged = Object.assign(resu.data[0] || {}, ele, {
+                status: nres.data[0],
+                fanstatus: nres.data[1],
+                enum: nres.data.emergency,
+                connectionInfo: cres.data[0] // ✅ store connection info ("OFF" = online)
+              });
 
-        });
+              newStat.push({ [ele.uniqueId]: [merged] });
+              newStatCpy.push({ [ele.uniqueId]: [merged] });
+            } catch (err) {
+              console.error(err);
+            }
+          })
+        );
+
+        setStat(newStat);
+        setStatCpy(newStatCpy);
       });
     }
   }, [props]);
+
+  function checkOnline(device) {
+    return device?.connectionInfo === "OFF" && device?.Status === 1;
+  }
 
   function filterit(event) {
     if (event.target.value === "All") {
       setStatCpy(stat);
     } else if (event.target.value === "active") {
-      setStatCpy(
-        stat.filter(
-          (ele) => ele[Object.keys(ele)[0]][0]["status"] === "ON"
-        )
-      );
+      setStatCpy(stat.filter((ele) => {
+        const device = ele[Object.keys(ele)[0]][0];
+        return checkOnline(device);
+      }));
     } else if (event.target.value === "inactive") {
-      setStatCpy(
-        stat.filter(
-          (ele) => ele[Object.keys(ele)[0]][0]["status"] === "OFF"
-        )
-      );
+      setStatCpy(stat.filter((ele) => {
+        const device = ele[Object.keys(ele)[0]][0];
+        return !checkOnline(device);
+      }));
     } else {
-      setStatCpy(
-        stat.filter(
-          (ele) => ele[Object.keys(ele)[0]][0]["Power"] >= 1000
-        )
-      );
+      setStatCpy(stat.filter((ele) => ele[Object.keys(ele)[0]][0]["Power"] >= 1000));
     }
   }
 
-  function chitst(event) {
-    let i = event.target.checked;
-    axios
-      .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/change", {
-        id: event.target.id,
-        st: event.target.checked ? 0 : 1,
-      })
-      .then(() => {
-        event.target.checked = i;
-      })
-      .catch((err) => {
-        console.log(err);
+  async function chitst(event) {
+    let isChecked = event.target.checked;
+    const deviceId = event.target.id;
+    const relayStatus = isChecked ? 0 : 1;
+
+    try {
+      await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/change", {
+        id: deviceId,
+        st: relayStatus,
       });
+
+      event.target.checked = isChecked;
+
+      await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/relayChange", {
+        id: deviceId,
+        st: relayStatus,
+      });
+
+      console.log("Relay status sent");
+    } catch (err) {
+      console.error("Error changing status or sending relay:", err);
+      alert("Failed to change relay status.");
+    }
   }
 
   return (
@@ -106,45 +104,43 @@ function SensorCard(props) {
               <h2>Filtered Results ({statCpy.length})</h2>
             </div>
             <div className="col-sm-9">
-              <div className="btn-group" data-goggle="buttons">
+              <div className="btn-group" data-toggle="buttons">
                 <label className="btn btn-info active" style={{ paddingRight: "35px", paddingLeft: "15px" }}>
-                    <input type="radio" name="status" value="All" onClick={filterit} defaultChecked id="all" />
-                    All
+                  <input type="radio" name="status" value="All" onClick={filterit} defaultChecked id="all" />
+                  All
                 </label>
                 <label className="btn btn-success" style={{ paddingRight: "59px", paddingLeft: "15px" }}>
-                    <input type="radio" name="status" value="active" onClick={filterit} />
-                    Active
+                  <input type="radio" name="status" value="active" onClick={filterit} />
+                  Active
                 </label>
                 <label className="btn btn-warning" style={{ paddingRight: "68px", paddingLeft: "10px" }}>
-                    <input type="radio" name="status" value="inactive" onClick={filterit} />
-                    Inactive
+                  <input type="radio" name="status" value="inactive" onClick={filterit} />
+                  Inactive
                 </label>
                 <label className="btn btn-danger" style={{ paddingRight: "68px", paddingLeft: "10px" }}>
-                    <input type="radio" name="status" value="expired" onClick={filterit} />
-                    Danger
+                  <input type="radio" name="status" value="expired" onClick={filterit} />
+                  Danger
                 </label>
 
-                {/* "View Record" Button, visible only if user is Admin */}
                 {props.login === "Admin" && (
-                    <button
+                  <button
                     className="btn btn-primary"
                     id="view-records-button"
-                    onClick={() => navigate("/view-records")}  
-                    style={{ 
-                    padding: "5px 15px 5px 5px",
-                    fontSize: "14px",
-                    whiteSpace: "nowrap"
-                    }}>
+                    onClick={() => navigate("/view-records")}
+                    style={{
+                      padding: "5px 15px 5px 5px",
+                      fontSize: "14px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     View Records
-                    </button>           
+                  </button>
                 )}
-
               </div>
             </div>
           </div>
         </div>
 
-        {/* Horizontal Scroll Wrapper */}
         <div style={{ overflowX: "auto" }}>
           <table className="table table-striped table-hover tableeee" style={{ minWidth: "1200px" }}>
             <thead>
@@ -160,9 +156,8 @@ function SensorCard(props) {
                 <th style={{ textAlign: "center" }}><u>State</u></th>
                 <th style={{ textAlign: "center" }}><u>Pin Code</u></th>
                 {props.login === "Admin" && (
-                    <th style={{ textAlign: "center" }}><u>Change Status</u></th>
+                  <th style={{ textAlign: "center" }}><u>Change Status</u></th>
                 )}
-
                 <th style={{ textAlign: "center" }}><u>Status</u></th>
                 <th style={{ textAlign: "center" }}><u>Emergency</u></th>
                 <th style={{ textAlign: "center" }}><u>View</u></th>
@@ -171,8 +166,10 @@ function SensorCard(props) {
             <tbody>
               {statCpy.map((ele, index) => {
                 const device = ele[Object.keys(ele)[0]][0];
+                const isOnline = checkOnline(device);
+
                 return (
-                    <tr style={{ textAlign: "center" }} key={index + 1}>
+                  <tr style={{ textAlign: "center" }} key={index + 1}>
                     <td>{index + 1}</td>
                     <td>{device["device-name"]}</td>
                     <td>{device["uniqueId"]}</td>
@@ -183,72 +180,77 @@ function SensorCard(props) {
                     <td>{device["sector"]}</td>
                     <td>{device["state"]}</td>
                     <td>{device["pincode"]}</td>
+
                     {props.login === "Admin" && (
-                        <td>
+                      <td>
                         <div className="toggle-container">
-                            <label className="switch">
-                                <input
-                                   type="checkbox"
-                                   id={device["uniqueId"]}
-                                   onChange={chitst}
-                                   checked={device["Status"]}
-                                />
-                                <span className="slider round"></span>
-                            </label>
+                          <label className="switch">
+                            <input
+                              type="checkbox"
+                              id={device["uniqueId"]}
+                              onChange={chitst}
+                              checked={device["Status"]}
+                            />
+                            <span className="slider round"></span>
+                          </label>
                         </div>
-                        </td>
+                      </td>
                     )}
 
                     <td>
-                        <div className="d-flex flex-column align-items-center">
+                      <div className="d-flex flex-column align-items-center">
                         <span
-                            style={{ paddingTop: "8px", paddingBottom: "8px", fontSize: "13px" }}
-                            className={
-                                "label label-" + 
-                                (device["status"] === "OFF" ||
-                                !device["status"] ? "warning" : 
-                                device["Power"] > 1000 ? "danger" : 
-                                "success")
-                            }
+                          style={{ paddingTop: "8px", paddingBottom: "8px", fontSize: "13px" }}
+                          className={
+                            "label label-" +
+                            (!isOnline
+                              ? "warning"
+                              : device["Power"] > 1000
+                              ? "danger"
+                              : "success")
+                          }
                         >
-                            {device["status"] === "OFF" ||
-                                !device["status"]
-                                ? "Inactive"
-                                : device["Power"] > 1000
-                                ? "Danger"
-                                : "Active"}
+                          {!isOnline
+                            ? "Inactive"
+                            : device["Power"] > 1000
+                            ? "Danger"
+                            : "Active"}
                         </span>
-                        </div>
+                      </div>
                     </td>
 
                     <td>
-                        <button
+                      <button
                         type="button"
                         className={
-                            "btn btn-" + (device["enum"] ? "danger" : "success") + " mt-1"}
-                        >
+                          "btn btn-" + (device["enum"] ? "danger" : "success") + " mt-1"
+                        }
+                      >
                         <i
-                            className={
-                                "bi bi-" + (device["enum"] ? "exclamation" : "check") +"-circle icon-style emergency-icon"}
+                          className={
+                            "bi bi-" +
+                            (device["enum"] ? "exclamation" : "check") +
+                            "-circle icon-style emergency-icon"
+                          }
                         ></i>{" "}
                         {device["enum"] ? "Emergency" : "No emergency"}
-                        </button>
+                      </button>
                     </td>
 
                     <td>
-                        <NavLink to="/view">
+                      <NavLink to="/view">
                         <button
-                            onClick={viewit}
-                            login={props.login}
-                            className="view-button btn btn-sm manage"
-                            id="view-button"
-                            name={Object.keys(ele)[0]}
+                          onClick={viewit}
+                          login={props.login}
+                          className="view-button btn btn-sm manage"
+                          id="view-button"
+                          name={Object.keys(ele)[0]}
                         >
-                            View
+                          View
                         </button>
-                        </NavLink>
+                      </NavLink>
                     </td>
-                    </tr>
+                  </tr>
                 );
               })}
             </tbody>
