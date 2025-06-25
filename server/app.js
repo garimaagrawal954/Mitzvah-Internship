@@ -16,7 +16,8 @@ import {
   QueryCommand,
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { DynamoDB,DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDB,DynamoDBClient,GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { ApiGatewayManagementApiClient, PostToConnectionCommand } from '@aws-sdk/client-apigatewaymanagementapi';
 const app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -78,6 +79,77 @@ const empTable1 = process.env.EMP_TABLE_1
 const empTable2 = process.env.EMP_TABLE_2
 const empTable3 = process.env.EMP_TABLE_3
 const empTable4 = process.env.EMP_TABLE_4
+const WEBSOCKET_ENDPOINT = process.env.WEBSOCKET_ENDPOINT; 
+const DYNAMO_TABLE = process.env.DYNAMO_TABLE; //table for status connections
+
+const dbClient = new DynamoDBClient({
+  region: aws_region,
+  credentials: {
+    accessKeyId: my_AWSAccessKeyId,
+    secretAccessKey: my_AWSSecretKey
+  }
+});
+const apiClient = new ApiGatewayManagementApiClient({
+  region: aws_region,
+  endpoint: WEBSOCKET_ENDPOINT,
+  credentials: {
+    accessKeyId: my_AWSAccessKeyId,
+    secretAccessKey: my_AWSSecretKey
+  }
+});
+
+app.post('/relayChange', async (req, res) => {
+  const { id, st } = req.body;
+
+  if (!id || typeof st !== 'number' || ![0, 1].includes(st)) {
+    return res.status(400).send('Invalid request body');
+  }
+
+  try {
+    // 1. Fetch connectionId from DynamoDB
+    const data = await dbClient.send(new GetItemCommand({
+      TableName: DYNAMO_TABLE,
+      Key: { uniqueId: { S: id } }
+    }));
+
+    if (!data.Item) {
+      return res.status(404).send('Device not connected');
+    }
+
+    const connectionId = data.Item.connectionId.S;
+    const message = { relayStatus: st };
+
+    console.log(`Sending relayStatus=${st} to device ${id} via connectionId=${connectionId}`);
+
+    // 2. Try to send the message over WebSocket
+    try {
+      await apiClient.send(new PostToConnectionCommand({
+        ConnectionId: connectionId,
+        Data: Buffer.from(JSON.stringify(message))
+      }));
+      res.status(200).send('Relay status sent successfully');
+    } catch (err) {
+      if (err.name === 'GoneException') {
+        console.warn('Connection stale. Deleting connection from DB...');
+
+        // 3. Clean up the stale connection
+        await dbClient.send(new DeleteItemCommand({
+          TableName: DYNAMO_TABLE,
+          Key: { uniqueId: { S: id } }
+        }));
+
+        return res.status(410).send('Device disconnected');
+      } else {
+        console.error('Failed to send WebSocket message:', err);
+        throw err;
+      }
+    }
+
+  } catch (err) {
+    console.error('Error handling /relayChange:', err);
+    res.status(500).send('Failed to send relay status');
+  }
+});
 
 var dynamoDB = DynamoDBDocument.from(
   new DynamoDB({

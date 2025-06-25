@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.835.0",
     "@aws-sdk/client-dynamodb": "^3.575.0",
     "@aws-sdk/client-s3": "^3.575.0",
     "@aws-sdk/lib-dynamodb": "^3.575.0",
