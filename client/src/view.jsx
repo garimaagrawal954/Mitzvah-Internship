@@ -94,10 +94,10 @@ function View(props) {
     });
   }
 
-  const isStatusOn = con[0] === "OFF";
-  console.log("Connection Info:", con);
+  const isStatusOn = con[0] === "ON";
+
   const isDeviceOn = data[0]?.Status === 1;
-  console.log("Connection Status:", con, "Device Data:", data);
+
 
   return (
     <>
@@ -107,9 +107,9 @@ function View(props) {
             <h2 style={{ marginLeft: "-30px", display: 'inline' }}>
               Device Name: <span>{deviceName || ''}</span>
             </h2>
-            <i className="fas fa-circle" style={{ color: isStatusOn&&isDeviceOn ? "green" : "red", marginLeft: "60px", fontSize: "10px" }}></i>
-            <h4 style={{ color: isStatusOn&&isDeviceOn ? "green" : "red", display: 'inline', marginLeft: '5px', fontFamily: 'cursive' }}>
-              {isStatusOn&&isDeviceOn ? "Online" : "Offline"}
+            <i className="fas fa-circle" style={{ color: isStatusOn? "green" : "red", marginLeft: "60px", fontSize: "10px" }}></i>
+            <h4 style={{ color: isStatusOn ? "green" : "red", display: 'inline', marginLeft: '5px', fontFamily: 'cursive' }}>
+              {isStatusOn ? "Online" : "Offline"}
             </h4>
           </div>
 
