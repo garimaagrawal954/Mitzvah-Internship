@@ -51,7 +51,7 @@ function Header(props) {
             aria-expanded="false"
           >
             <div className="profile-pic">
-              <img src="./src/image.png" alt="Profile Picture" />
+              <img src="https://imgs.search.brave.com/m12gFeEaYTH9TW9JHo1E4K4UFZBIAGpFdv-O_jdbty0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90My5m/dGNkbi5uZXQvanBn/LzAzLzQ2LzgzLzk2/LzM2MF9GXzM0Njgz/OTY4M182bkFQemJo/cFNrSXBiOHBtQXd1/ZmtDN2M1ZUQ3d1l3/cy5qcGc" alt="Profile Picture" />
             </div>
           </a>
           <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
