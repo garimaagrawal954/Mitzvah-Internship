@@ -12,7 +12,7 @@ function Details() {
     const fetchDevice = async () => {
       try {
         // First API call
-        const mainRes = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", {
+        const mainRes = await axios.post("http://13.203.214.225:3000/device-select", {
           deviceId: id,
         });
 
@@ -20,7 +20,7 @@ function Details() {
 
         if (deviceData) {
           // Second API call
-          const statusRes = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/find", {
+          const statusRes = await axios.post("http://13.203.214.225:3000/find", {
             id_view: id,
           });
 

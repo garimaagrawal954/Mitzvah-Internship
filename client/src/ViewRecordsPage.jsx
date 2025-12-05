@@ -11,7 +11,7 @@ const ViewRecordsPage = () => {
     const fetchRecords = async () => {
       try {
         const filters = JSON.parse(sessionStorage.getItem("filter")) || {};
-        const response = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", filters);
+        const response = await axios.post("http://13.203.214.225:3000/device-select", filters);
         setRecords(response.data);
         setLoading(false);
       } catch (error) {

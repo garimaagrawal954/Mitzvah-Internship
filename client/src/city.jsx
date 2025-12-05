@@ -1,34 +1,39 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+
 function City(props) {
   const [data, setdata] = useState([]);
+
   function callit(event) {
     props.change(event.target.id, event.target.value);
   }
-  var ds = props.ds;
+
   useEffect(() => {
-    if (props.login == "Admin" && data != []) {
-    axios.get("https://mitzvah-software-for-smart-air-curtain.onrender.com/city-select").then((res) => {
-      setdata(res.data);
-    });
-  }
-  });
+    if (
+      (props.login === "Admin" || props.login === "Client") &&
+      props.cs !== "" &&
+      data.length === 0
+    ) {
+      axios
+        .post("http://13.203.214.225:3000/city-select", { client: props.cs })
+        .then((res) => {
+          setdata(res.data);
+        });
+    }
+  }, [props.login, props.cs]);
 
   return (
-    <>
-      <select id="city-select" onChange={callit} value={props.cis} disabled={props.login == "Client"}>
-        <option id="3" value="">
-        {props.login == "Admin" ? "Select City" : props.cis}
+    <select id="city-select" onChange={callit} value={props.cis}>
+      <option id="3" value="">
+        Select City
+      </option>
+      {data.map((ele) => (
+        <option key={ele} id={ele} value={ele}>
+          {ele}
         </option>
-        {data.map((ele) => {
-          return (
-            <option key={ele} id={ele} value={ele}>
-              {ele}
-            </option>
-          );
-        })}
-      </select>
-    </>
+      ))}
+    </select>
   );
 }
+
 export default City;

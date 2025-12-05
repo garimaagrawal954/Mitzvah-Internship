@@ -25,7 +25,7 @@ function Home(props) {
       navigate("/");
     } else {
       axios
-        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-name", {
+        .post("http://13.203.214.225:3000/get-name", {
           username: val.username,
           password: val.password,
         })
@@ -40,7 +40,7 @@ function Home(props) {
             }, 10);
           } else if (res.data.flag === "admin") {
             // Call the /user-role API to check if the user is an admin
-            axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/user-role", { name: val.username })
+            axios.post("http://13.203.214.225:3000/user-role", { name: val.username })
               .then(response => {
                 if (response.data.role === "admin") {
                   setIsAdmin(true);  // Set user as admin

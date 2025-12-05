@@ -23,7 +23,7 @@ function Delcl(props) {
     else{
       // console.log("Hi");
     axios
-      .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-name", {
+      .post("http://13.203.214.225:3000/get-name", {
         username: formdata.username,
       })
       .then((res) => {
@@ -43,7 +43,7 @@ function Delcl(props) {
   };
   function deleteit() {
     axios
-      .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/delete-client", {
+      .post("http://13.203.214.225:3000/delete-client", {
         username: formdata.username,
       })
       .then((res) => {

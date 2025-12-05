@@ -3,8 +3,9 @@ import axios from "axios";
 
 function Changeform(props) {
   const [formData, setFormData] = useState({ newpass: "", confpass: "" });
-  const [done,setdone]=useState(0);
-  const [message,setmessage]=useState("");
+  const [done, setdone] = useState(0);
+  const [message, setmessage] = useState("");
+
   function handleChange(event) {
     setdone(0);
     setmessage("");
@@ -13,53 +14,54 @@ function Changeform(props) {
       [event.target.id]: event.target.value,
     }));
   }
+
   function chpaas(event) {
-    // console.log("Ok")
     event.preventDefault();
-    if(formData.newpass.match(
-        /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/
-      )){
-    if ((formData.confpass == formData.newpass)) {
-      axios
-        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/add2", {
+
+    const strongPassRegex =
+      /^(?=.\d)(?=.[a-z])(?=.[A-Z])(?=.[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
+
+    if (formData.newpass.match(strongPassRegex)) {
+      if (formData.confpass === formData.newpass) {
+        const data = {
           password: formData.confpass,
           username: JSON.parse(sessionStorage.getItem("user")).username,
-          name: props.cs,
-          district:props.ds,
-          location:props.ls,
-          city:props.cis,
           login: props.login,
-        })
-        .then((res) => {
-            setdone(1)
-        })
-        .catch((err) => {
-            setdone(2)
-        });
+        };
+
+        // Only include client name if login is Client
+        if (props.login === "Client") {
+          data.name = props.cs;
+        }
+
+        axios
+          .post("http://13.203.214.225:3000/add2", data)
+          .then(() => setdone(1))
+          .catch(() => setdone(2));
+      } else {
+        setdone(3);
+      }
     } else {
-        setdone(3)
+      setdone(4);
     }
-}
-else{
-    setdone(4);
-}
   }
-  useEffect(()=>{
-    if(done!=0){
-        if(done==1){
-            setmessage("Password Changed Successfully");
-        }
-        if(done==2){
-            setmessage("Some error Occurred. Please try again");
-        }
-        if(done==3){
-            setmessage("Passwords are not matching");
-        }
-        if(done==4){
-            setmessage("Password is not strong. Ensure length is at least 8 and there is at least one uppercase, lowercase, numeric and special characters")
-        }
+
+  useEffect(() => {
+    if (done !== 0) {
+      if (done === 1) {
+        setmessage("Password Changed Successfully");
+      } else if (done === 2) {
+        setmessage("Some error Occurred. Please try again");
+      } else if (done === 3) {
+        setmessage("Passwords are not matching");
+      } else if (done === 4) {
+        setmessage(
+          "Password is not strong. Ensure length is at least 8 and there is at least one uppercase, lowercase, numeric and special characters"
+        );
+      }
     }
-  },[done])
+  }, [done]);
+
   return (
     <div
       id="slider"
@@ -109,7 +111,9 @@ else{
             onChange={handleChange}
             required
           />
-          <p style={done==1?{color:"green"}:{color:"red"}}>{message}</p>
+          <p style={done === 1 ? { color: "green" } : { color: "red" }}>
+            {message}
+          </p>
           <button type="submit">Change It !</button>
         </form>
       </div>

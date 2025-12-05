@@ -8,8 +8,12 @@ function Update(props) {
     client: "",
     macAddress: "",
     device_name: "",
-    wifi_name: "",
-    wifi_pass: "",
+    district: "",
+    city: "",
+    location: "",
+    sector: "",
+    state: "",
+    pin: ""
   });
   const [dropdowns, setDropdowns] = useState({
     client: false,
@@ -21,7 +25,7 @@ function Update(props) {
   const [temp_dn, settemp_dn] = useState("");
 
   const handleChange = (event) => {
-    setFlag("")
+    setFlag("");
     const { id, value } = event.target;
     setformdata((prev) => ({ ...prev, [id]: value }));
 
@@ -31,7 +35,7 @@ function Update(props) {
   };
 
   const fetchClients = (value) => {
-    axios.get("https://mitzvah-software-for-smart-air-curtain.onrender.com/client-select").then((res) => {
+    axios.get("http://13.203.214.225:3000/client-select").then((res) => {
       const filteredClients = res.data.filter((name) =>
         name.toLowerCase().includes(value.toLowerCase())
       );
@@ -47,19 +51,23 @@ function Update(props) {
     }
 
     axios
-      .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/devicecheck", {
+      .post("http://13.203.214.225:3000/devicecheck", {
         id: formdata.mac,
       })
       .then((res) => {
         if (res.data != "Ok") {
-          settemp_dn(res.data["device-name"])
+          settemp_dn(res.data["device-name"]);
           setMessage("Device found. You can update the details.");
           setformdata({
             client: res.data.client_select,
             macAddress: res.data.uniqueId,
             device_name: res.data["device-name"],
-            wifi_name: res.data["wifi_name"],
-            wifi_pass: res.data["wifi_password"],
+            district: res.data.district,
+            city: res.data.city,
+            location: res.data.location,
+            sector: res.data.sector,
+            state: res.data.state,
+            pin: res.data.pin,
           });
         } else {
           setMessage("Device not found. Remove any extra spaces");
@@ -72,14 +80,15 @@ function Update(props) {
         setShowForm(false);
       });
   };
+
   const handleDropdownClick = (id, value) => {
     setformdata((prevValues) => ({
       ...prevValues,
       [id]: value,
     }));
-    // console.log(id);
     toggleDropdown(id, false);
   };
+
   useEffect(() => {
     if (message == "Device found. You can update the details.") {
       setShowForm(true);
@@ -88,9 +97,8 @@ function Update(props) {
 
   const handleUpdate = (event) => {
     event.preventDefault();
-    const { client, macAddress, device_name } =
-      formdata;
-    if (!client ||  !macAddress || !device_name) {
+    const { client, macAddress, device_name } = formdata;
+    if (!client || !macAddress || !device_name) {
       setMessage("Please fill all the fields.");
       return;
     } else if (macAddress.length !== 17) {
@@ -103,16 +111,15 @@ function Update(props) {
       );
     } else {
       axios
-        .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/devicecheck", {
+        .post("http://13.203.214.225:3000/devicecheck", {
           device_name: device_name,
         })
         .then((res) => {
-          if (res.data != "Ok" && temp_dn!=device_name) {
-            // console.log(res.data);
+          if (res.data != "Ok" && temp_dn != device_name) {
             setFlag(res.data);
           } else {
             axios
-              .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/add-data", formdata)
+              .post("http://13.203.214.225:3000/add-data", formdata)
               .then((res) => {
                 setFlag("Device Updated Successfully");
               })
@@ -120,35 +127,40 @@ function Update(props) {
           }
         });
     }
-    // axios
-    //   .post("https://mitzvah-software-for-smart-air-curtain.onrender.com/update-device", { mac, client, city, district, location })
-    //   .then((res) => {
-    //     setMessage(res.data.message || "Device updated successfully.");
-    //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //     setMessage("An error occurred while updating the device.");
-    //   });
   };
+
   const toggleDropdown = (id, state) => {
     setDropdowns((prevDropdowns) => ({
       ...prevDropdowns,
       [id]: state,
     }));
   };
+
   function hideall(event) {
-    // console.log(event.target.id);
     if (event.target.id == "" || event.target.id == "header") {
       toggleDropdown("client", false);
     }
   }
+
   return (
     <div
       id="slider"
-      style={props.slide === 1 ? { right: "0px" } : { right: "-360px" }}
+      style={{
+        ...props.slide === 1 ? { right: "0px" } : { right: "-360px" },
+        overflowY: "auto",
+        maxHeight: "100vh",
+        paddingRight: "10px"
+      }}
       onClick={hideall}
     >
-      <div id="header">
+      <div
+        id="header"
+        style={{
+          overflowY: "auto",
+          maxHeight: "100vh",
+          paddingRight: "10px"
+        }}
+      >
         <h2 onClick={props.here}>
           <i
             id="Cross"
@@ -225,21 +237,55 @@ function Update(props) {
             <div className="custom-select-container">
               <input
                 type="text"
-                id="wifi_name"
-                placeholder="Enter wifi name"
-                value={formdata.wifi_name}
+                id="district"
+                placeholder="Enter District"
+                value={formdata.district}
                 onChange={handleChange}
-                required
               />
             </div>
             <div className="custom-select-container">
               <input
-                type="password"
-                id="wifi_pass"
-                placeholder="Enter wifi password"
-                value={formdata.wifi_pass}
+                type="text"
+                id="city"
+                placeholder="Enter City"
+                value={formdata.city}
                 onChange={handleChange}
-                required
+              />
+            </div>
+            <div className="custom-select-container">
+              <input
+                type="text"
+                id="location"
+                placeholder="Enter Location"
+                value={formdata.location}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="custom-select-container">
+              <input
+                type="text"
+                id="sector"
+                placeholder="Enter Sector"
+                value={formdata.sector}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="custom-select-container">
+              <input
+                type="text"
+                id="state"
+                placeholder="Enter State"
+                value={formdata.state}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="custom-select-container">
+              <input
+                type="text"
+                id="pin"
+                placeholder="Enter Pin"
+                value={formdata.pin}
+                onChange={handleChange}
               />
             </div>
             <p

@@ -15,7 +15,7 @@ function SensorCard(props) {
     if (props.login === "Client" || props.login === "Admin") {
       document.getElementById("all").checked = true;
 
-      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", props).then(async (res) => {
+      axios.post("http://13.203.214.225:3000/device-select", props).then(async (res) => {
         const deviceList = res.data;
         const newStat = [];
         const newStatCpy = [];
@@ -23,15 +23,15 @@ function SensorCard(props) {
         await Promise.all(
           deviceList.map(async (ele) => {
             try {
-              const resu = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/find", { id_view: ele.uniqueId });
-              const nres = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/check-emergency", { id: ele.uniqueId });
-              const cres = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/checki", { id: ele.uniqueId });
+              const resu = await axios.post("http://13.203.214.225:3000/find", { id_view: ele.uniqueId });
+              const nres = await axios.post("http://13.203.214.225:3000/check-emergency", { id: ele.uniqueId });
+              const cres = await axios.post("http://13.203.214.225:3000/checki", { id: ele.uniqueId });
 
               const merged = Object.assign(resu.data[0] || {}, ele, {
                 status: nres.data[0],
                 fanstatus: nres.data[1],
                 enum: nres.data.emergency,
-                connectionInfo: cres.data[0] // ✅ store connection info ("OFF" = online)
+                connectionInfo: cres.data[0]
               });
 
               newStat.push({ [ele.uniqueId]: [merged] });
@@ -49,7 +49,7 @@ function SensorCard(props) {
   }, [props]);
 
   function checkOnline(device) {
-    return device?.connectionInfo === "OFF" && device?.Status === 1;
+    return device?.connectionInfo === "ON" && device?.Status === 1;
   }
 
   function filterit(event) {
@@ -76,14 +76,14 @@ function SensorCard(props) {
     const relayStatus = isChecked ? 0 : 1;
 
     try {
-      await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/change", {
+      await axios.post("http://13.203.214.225:3000/change", {
         id: deviceId,
         st: relayStatus,
       });
 
       event.target.checked = isChecked;
 
-      await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/relayChange", {
+      await axios.post("http://13.203.214.225:3000/relayChange", {
         id: deviceId,
         st: relayStatus,
       });
@@ -141,8 +141,23 @@ function SensorCard(props) {
           </div>
         </div>
 
-        <div style={{ overflowX: "auto" }}>
-          <table className="table table-striped table-hover tableeee" style={{ minWidth: "1200px" }}>
+        {/* ✅ Scrollable container for table */}
+        <div
+          style={{
+            overflowX: "auto",
+            overflowY: "hidden",
+            maxWidth: "100%",
+            paddingBottom: "10px", // Ensures scrollbar stays visible above footer
+            marginBottom: "30px",  // Adds space so scrollbar doesn't get hidden
+          }}
+        >
+          <table
+            className="table table-striped table-hover tableeee"
+            style={{
+              minWidth: "1500px",  // Force horizontal scroll if screen smaller
+              width: "1500px",
+            }}
+          >
             <thead>
               <tr style={{ fontSize: "16px", fontFamily: "sans-serif" }}>
                 <th style={{ textAlign: "center" }}><u>SNo.</u></th>

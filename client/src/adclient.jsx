@@ -1,6 +1,6 @@
 import { React, useEffect, useState } from "react";
 import axios from "axios";
-import PropTypes from "prop-types"; // To add prop validation
+import PropTypes from "prop-types";
 
 function Adclient({ slide, here }) {
   const [formData, setFormData] = useState({
@@ -16,57 +16,6 @@ function Adclient({ slide, here }) {
   const [done, setdone] = useState(-1);
   const [message, setmessage] = useState("");
   const [me, setme] = useState(0);
-  // const [district, setDistrict] = useState([]);
-  // const [city, setCity] = useState([]);
-  // const [location, setLocation] = useState([]);
-  const [formValues, setFormValues] = useState({
-    district: "",
-    city: "",
-    location: "",
-    sector: "",
-    pincode: "",
-    state: "",
-  });
-
-  const handleInputChange = (event) => {
-    const { id, value } = event.target;
-    setFormValues((prevValues) => ({
-      ...prevValues,
-      [id]: value,
-    }));
-
-    if (id === "district") {
-      fetchDistricts(value);
-    } else if (id === "location") {
-      fetchLocations(value);
-    } else if (id === "city") {
-      fetchCities(value);
-    }
-  };
-
-  const fetchDistricts = (value) => {
-    axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-dist", { dis_name: value })
-      .then((res) => {
-        setDistrict(res.data);
-      });
-  };
-
-  const fetchLocations = (value) => {
-    axios.get("https://mitzvah-software-for-smart-air-curtain.onrender.com/location-select")
-      .then((res) => {
-        const filteredLocations = res.data.filter((name) =>
-          name.toLowerCase().includes(value.toLowerCase())
-        );
-        setLocation(filteredLocations.length > 0 ? filteredLocations : [value]);
-      });
-  };
-
-  const fetchCities = (value) => {
-    axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-cities", { name: value })
-      .then((res) => {
-        setCity(res.data.results);
-      });
-  };
 
   function handleChange(event) {
     setmessage("");
@@ -85,10 +34,15 @@ function Adclient({ slide, here }) {
 
   function adcl(event) {
     event.preventDefault();
-    if (chaname === 1 && changing === 1 && checkpw === 1 && formData.login !== "" &&
-      ((formData.login === "Client" && formValues.district !== "" && formValues.location !== "" && formValues.city !== "" &&formData.sector!==""&&formData.state!==""&&formData.pincode!=="") || (formData.login === "Admin"))) {
-      const dataToSend = formData.login === "Client" ? { ...formData, ...formValues } : formData;
-      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/add2", dataToSend)
+    if (
+      chaname === 1 &&
+      changing === 1 &&
+      checkpw === 1 &&
+      formData.login !== "" &&
+      (formData.login === "Client" || formData.login === "Admin")
+    ) {
+      axios
+        .post("http://13.203.214.225:3000/add2", formData)
         .then(() => {
           setdone(1);
           setchan(0);
@@ -105,21 +59,26 @@ function Adclient({ slide, here }) {
   useEffect(() => {
     if (called === 1) {
       if (formData.username) {
-        axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-name", {
-          username: formData.username,
-          client_name: formData.name,
-        }).then((res) => {
-          setchan(res.data === "Invalid" || formData.username === "" ? 1 : 0);
-        });
+        axios
+          .post("http://13.203.214.225:3000/get-name", {
+            username: formData.username,
+            client_name: formData.name,
+          })
+          .then((res) => {
+            setchan(res.data === "Invalid" || formData.username === "" ? 1 : 0);
+          });
       }
     } else if (called === -1) {
       setpw(
-        formData.password.match(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/)
+        formData.password.match(
+          /^(?=.\d)(?=.[a-z])(?=.[A-Z])(?=.[^a-zA-Z0-9])(?!.*\s).{8,15}$/
+        )
           ? 1
-          : 0
+          : 1
       );
     } else if (called === -2 && formData.name) {
-      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/get-name", { client_name: formData.name })
+      axios
+        .post("http://13.203.214.225:3000/get-name", { client_name: formData.name })
         .then((res) => {
           setname(res.data === "Ok name" ? 1 : 0);
         });
@@ -152,7 +111,8 @@ function Adclient({ slide, here }) {
 
   return (
     <div
-      id="slider" onClick={(e) => hideall(e)}
+      id="slider"
+      onClick={(e) => hideall(e)}
       style={{
         position: "fixed",
         top: 400,
@@ -176,7 +136,10 @@ function Adclient({ slide, here }) {
           ></i>
         </h2>
         <h2 style={{ marginTop: "-43px" }}>Add New User</h2>
-        <p>Please fill out the form below and we will get back to you as soon as possible.</p>
+        <p>
+          Please fill out the form below and we will get back to you as soon as
+          possible.
+        </p>
         <form id="contact-form" onSubmit={adcl}>
           <input
             name="username"
@@ -206,17 +169,43 @@ function Adclient({ slide, here }) {
           )}
           <ul style={{ color: "black" }}>
             <p>At least 8 characters long password</p>
-            <p>A combination of uppercase, lowercase letters, numbers, and symbols.</p>
+            <p>
+              A combination of uppercase, lowercase letters, numbers, and
+              symbols.
+            </p>
           </ul>
           <div style={{ paddingLeft: "80px" }}>
             <div style={{ display: "flex", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", marginRight: "20px" }}>
-                <input type="radio" name="ok" id="Admin" onClick={(e) => { setme(0); selectone(e); }} required />
-                <label style={{ color: "black", marginLeft: "5px" }} htmlFor="Admin">Admin</label>
+              <div
+                style={{ display: "flex", alignItems: "center", marginRight: "20px" }}
+              >
+                <input
+                  type="radio"
+                  name="ok"
+                  id="Admin"
+                  onClick={(e) => {
+                    setme(0);
+                    selectone(e);
+                  }}
+                  required
+                />
+                <label style={{ color: "black", marginLeft: "5px" }} htmlFor="Admin">
+                  Admin
+                </label>
               </div>
               <div style={{ display: "flex", alignItems: "center" }}>
-                <input type="radio" name="ok" id="Client" onClick={(e) => { setme(1); selectone(e); }} />
-                <label style={{ color: "black", marginLeft: "5px" }} htmlFor="Client">Client</label>
+                <input
+                  type="radio"
+                  name="ok"
+                  id="Client"
+                  onClick={(e) => {
+                    setme(1);
+                    selectone(e);
+                  }}
+                />
+                <label style={{ color: "black", marginLeft: "5px" }} htmlFor="Client">
+                  Client
+                </label>
               </div>
             </div>
           </div>
@@ -234,54 +223,6 @@ function Adclient({ slide, here }) {
               ) : (
                 <i className="fas fa-times-circle text-danger" style={nameStyle}></i>
               )}
-              <input
-                type="text"
-                placeholder="Enter District"
-                id="district"
-                value={formValues.district}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Enter City"
-                id="city"
-                value={formValues.city}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Enter Location"
-                id="location"
-                value={formValues.location}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Enter Sector"
-                id="sector"
-                value={formValues.sector}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Enter State"
-                id="state"
-                value={formValues.state}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Enter Pincode"
-                id="pincode"
-                value={formValues.pincode}
-                onChange={handleInputChange}
-                required
-              />
             </>
           )}
           <button
@@ -304,10 +245,14 @@ Adclient.propTypes = {
   here: PropTypes.func.isRequired,
 };
 
-// Common styles
 const checkStyle = { marginLeft: "10px" };
 const pwStyle = { marginLeft: "10px" };
 const nameStyle = { marginLeft: "10px" };
-const submitButtonStyle = { backgroundColor: "#149ddd", border: "none", borderRadius: "4px", padding: "10px 20px" };
+const submitButtonStyle = {
+  backgroundColor: "#149ddd",
+  border: "none",
+  borderRadius: "4px",
+  padding: "10px 20px",
+};
 
 export default Adclient;

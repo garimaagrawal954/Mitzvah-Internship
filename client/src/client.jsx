@@ -1,44 +1,41 @@
 import { React, useEffect, useState } from "react";
 import axios from "axios";
+
 function Client(props) {
   const [data, setdata] = useState([]);
+
   function callit(event) {
     props.change(event.target.id, event.target.value);
-    console.log(props.cs)
   }
-  let content = [];
+
   useEffect(() => {
-    if (props.login == "Admin" && data != []) {
-      axios.get("https://mitzvah-software-for-smart-air-curtain.onrender.com/client-select").then((res) => {
-        // console.log(res.data);
-        setdata(() => {
-          // const sortit=Array.from(new Set(res.data));
-          // sortit.sort((a,b)=>{return(a<b)});
-          // console.log(sortit);
-          return res.data;
-        });
+    if (props.login === "Admin") {
+      axios.get("http://13.203.214.225:3000/client-select").then((res) => {
+        setdata(res.data);
       });
+    } else if (props.login === "Client") {
+      // For Client login, populate with their own value so other filters work
+      setdata([props.cs]);
     }
-  }, [props.login]);
+  }, [props.login, props.cs]);
+
   return (
     <select
       id="client-select"
       onChange={callit}
-      disabled={props.login == "Client"}
+      disabled={props.login === "Client"}
       value={props.cs}
     >
       <option key="1a" id="1" value="">
-        {props.login == "Admin" ? "Select Client" : props.cs}
+        {props.login === "Admin" ? "Select Client" : props.cs}
       </option>
-      {data.map((item) => {
-        return (
-          <option key={item} id={item} value={item}>
-            {item}
-          </option>
-        );
-      })}
-      {content}
+      {data.map((item) => (
+        <option key={item} id={item} value={item}>
+          {item}
+        </option>
+      ))}
     </select>
   );
 }
+
 export default Client;

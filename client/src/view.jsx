@@ -17,14 +17,14 @@ function View(props) {
 
     try {
       // 1. Call your existing backend logic to change status
-      const res = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/change", {
+      const res = await axios.post("http://13.203.214.225:3000/change", {
         id: props.id_view,
         st: currentStatus
       });
       console.log("Status changed:", res.data);
 
       // 2. Call /relayChange to send relayStatus to ESP32 over WebSocket
-      const relayRes = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/relayChange", {
+      const relayRes = await axios.post("http://13.203.214.225:3000/relayChange", {
         id: props.id_view,
         st: currentStatus
       });
@@ -40,7 +40,7 @@ function View(props) {
 
   // 🔄 Refresh data from backend
   function chitt() {
-    axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/checki", {
+    axios.post("http://13.203.214.225:3000/checki", {
       id: props.id_view
     }).then((res) => {
       setcon(res.data);
@@ -48,7 +48,7 @@ function View(props) {
       console.error("Error fetching connection info:", e);
     });
 
-    axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/find", props)
+    axios.post("http://13.203.214.225:3000/find", props)
       .then((res) => {
         setdata(res.data);
       }).catch((e) => {
@@ -65,7 +65,7 @@ function View(props) {
       navigate("/home");
     } else {
       chitt();
-      axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/device-select", {
+      axios.post("http://13.203.214.225:3000/device-select", {
         dname: props.id_view
       })
         .then((res) => {
@@ -86,7 +86,7 @@ function View(props) {
   }, [data]);
 
   function updateFailureStatus(power) {
-    axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/check-power", {
+    axios.post("http://13.203.214.225:3000/check-power", {
       id: props.id_view,
       power: power,
     }).catch(err => {

@@ -21,14 +21,14 @@ function Login({ setinput }) {
     try {
       debugger;
 
-      const roleResponse = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/user-role", {
+      const roleResponse = await axios.post("http://13.203.214.225:3000/user-role", {
         name: userInput.username,
       });
 
       const role = roleResponse.data.role;
       const flag = role === "client" ? "client" : "admin";
 
-      const res = await axios.post("https://mitzvah-software-for-smart-air-curtain.onrender.com/login", {
+      const res = await axios.post("http://13.203.214.225:3000/login", {
         [flag === "client" ? "clientinput" : "userinput"]: userInput,
         flag,
       });

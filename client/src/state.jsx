@@ -8,7 +8,7 @@ function State(props) {
   }
   useEffect(() => {
     if (props.login == "Admin" && data != []) {
-    axios.get("https://mitzvah-software-for-smart-air-curtain.onrender.com/state-select").then((res) => {
+    axios.get("http://13.203.214.225:3000/state-select").then((res) => {
       setdata(res.data);
     });
   }

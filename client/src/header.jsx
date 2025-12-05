@@ -39,7 +39,7 @@ function Header(props) {
         alt="Logo"
         style={{width:'230px'}}
       />
-      <h1>Mitzvah Engg.(India) Pvt. Limited</h1>
+      <h1>Mitzvah Engg.(India) Limited</h1>
       {props.login!="Out"?
       <div className="profile-menu">
         <div className="nav-item dropdown" onClick={dropit}>

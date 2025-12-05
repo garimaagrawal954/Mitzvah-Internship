@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+*.pem
+*.crt
+*.key
+*.cer
+*.der
+*.p12
+*.pfx
+aws-credentials*
