@@ -2,304 +2,223 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
-// FileSaver for CSV
 import { saveAs } from "file-saver";
 
-// Fetch data from API
-const fetchData = async (uniqueId, startDate, endDate) => {
+const fetchHistory = async (uniqueId, startDate, endDate) => {
   const url = new URL(`http://13.203.214.225:3000/items/${uniqueId}`);
   if (startDate && endDate) {
     url.searchParams.append("startDate", startDate);
     url.searchParams.append("endDate", endDate);
   }
+  const res = await fetch(url);
+  return res.json();
+};
 
-  const response = await fetch(url);
-  return response.json();
+const fetchDeviceInfo = async (id) => {
+  const res = await fetch("http://13.203.214.225:3000/device-select", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dname: id })
+  });
+  return res.json();
 };
 
 function DeviceHistory() {
   const { id } = useParams();
 
   const [history, setHistory] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [deviceName, setDeviceName] = useState('');
-  const [clientName, setClientName] = useState('');
-  const [location, setLocation] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  
-  // Convert date string to timestamp
-  const convertToTimestamp = (dateStr) => {
-    if (!dateStr) return null;
-    return new Date(dateStr).getTime();
-  };
 
-  // Fetch history and device info
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // Device metadata
+  const [clientName, setClientName] = useState("");
+  const [deviceName, setDeviceName] = useState("");
+  const [location, setLocation] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+
+  const toTimestamp = (d) => (d ? new Date(d).getTime() : null);
+
   useEffect(() => {
-    const fetchDeviceInformation = async () => {
-      try {
-        setLoading(true);
-        // First fetch history
-        const startTimestamp = convertToTimestamp(startDate);
-        const endTimestamp = convertToTimestamp(endDate);
-        const data = await fetchData(id, startTimestamp, endTimestamp);
-        setHistory(data.items);
+    const loadData = async () => {
+      setLoading(true);
 
-        // Then fetch the device's info
-        const res = await fetch("http://13.203.214.225:3000/device-select", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dname: id })
-        });
-        const resData = await res.json();
+      // Fetch history
+      const historyRes = await fetchHistory(
+        id,
+        toTimestamp(startDate),
+        toTimestamp(endDate)
+      );
+      setHistory(historyRes.items || []);
+      setTotalCount(historyRes.count || 0);
 
-        if (resData.length > 0) {
-          setDeviceName(resData[0]["device-name"]);
-          setClientName(resData[0]["client_select"]);
-          setLocation(resData[0]["location"]);
-          setCity(resData[0]["city"]);
-          setState(resData[0]["state"]);
-        } else {
-          setDeviceName(id);
-        }
-      } catch (error) {
-        console.error("Error fetching device history.", error);
-      } finally {
-        setLoading(false);
+      // Fetch device info
+      const deviceRes = await fetchDeviceInfo(id);
+      if (deviceRes.length > 0) {
+        setDeviceName(deviceRes[0]["device-name"]);
+        setClientName(deviceRes[0]["client_select"]);
+        setLocation(deviceRes[0]["location"]);
+        setCity(deviceRes[0]["city"]);
+        setState(deviceRes[0]["state"]);
+      } else {
+        setDeviceName(id);
       }
+
+      setLoading(false);
     };
 
-    fetchDeviceInformation();
+    loadData();
   }, [id, startDate, endDate]);
 
-  // Filter and sort by date descending
-  const filteredData = history
-    .filter((item) => {
-      const itemDate = new Date(item.current_dt);
-      const itemTimestamp = itemDate.getTime();
+  const sortedData = [...history].sort(
+    (a, b) => b.current_dt - a.current_dt
+  );
 
-      // Apply filters if dates are set
-      const start = startDate ? convertToTimestamp(startDate) : null;
-      const end = endDate ? convertToTimestamp(endDate) : null;
-
-      if (start && itemTimestamp < start) return false;
-      if (end && itemTimestamp > end) return false;
-
-      return true;
-    })
-    .sort((a, b) => new Date(b.current_dt) - new Date(a.current_dt));
-
-  // Generate PDF
+  /* ================= PDF ================= */
   const downloadPDF = () => {
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4"
-  });
-
-  const img = new Image();
-  img.src =
-    "https://m.media-amazon.com/images/S/aplus-seller-content-images-us-east-1/A21TJRUUN4KGV/A1RYKQ2GSJVIL/23268fa0-0b21-422e-8352-c15a080a667c._CR0,0,600,180_PT0_SX600__.png";
-
-  img.onload = () => {
-    doc.addImage(img, "PNG", 10, 10, 50, 16);
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(`Mitzvah Engg. (India) Limited`, 105, 25, { align: "center" });
-
-    doc.setFontSize(14);
-    doc.text(`Smart Air Curtain`, 105, 35, { align: "center" });
+    const doc = new jsPDF("p", "mm", "a4");
 
     doc.setFontSize(10);
-    doc.text(
-      "Report Generated by Mitzvah Engg. (India) Limited.",
-      105,
-      42,
-      { align: "center" }
-    );
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Client Name: ${clientName}`, 15, 52);
-    doc.text(`Device Name: ${deviceName}`, 15, 58);
-    doc.text(`Location: ${location}, ${city}, ${state}`, 15, 64);
-
-    // ✅ Add report generation date
-    doc.text(`Report Date: ${new Date().toLocaleDateString()}`, 15, 70);
+    doc.text(`Client Name: ${clientName}`, 10, 15);
+    doc.text(`Device Name: ${deviceName}`, 10, 21);
+    doc.text(`Location: ${location}, ${city}, ${state}`, 10, 27);
 
     autoTable(doc, {
-      startY: 76,
-      head: [
-        [
-          "Date",
-          "Head Count",
-          "Indoor Temp",
-          "Outdoor Temp",
-          "Power",
-          "RPM",
-          "Failed"
-        ]
-      ],
-      body: filteredData.map((item) => [
-        new Date(item.current_dt).toLocaleDateString(),
+      startY: 32,
+      head: [[
+        "Date",
+        "Time",
+        "Head Count",
+        "Indoor Temp",
+        "Outdoor Temp",
+        "Power",
+        "RPM",
+        "Failed"
+      ]],
+      body: sortedData.map(item => {
+        const d = new Date(item.current_dt);
+        return [
+          d.toLocaleDateString(),
+          d.toLocaleTimeString(),
+          item.Head_Count,
+          item.Indoor_Temp,
+          item.Outdoor_Temp,
+          item.Power,
+          item.RPM,
+          item.Failed_Device ? "Yes" : "No"
+        ];
+      }),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [76, 175, 80], textColor: 255 }
+    });
+
+    doc.save(`device-${deviceName}-history.pdf`);
+  };
+
+  /* ================= CSV ================= */
+  const exportCSV = () => {
+    const rows = [
+      ["Date", "Time", "Head Count", "Indoor Temp", "Outdoor Temp", "Power", "RPM", "Failed"]
+    ];
+
+    sortedData.forEach(item => {
+      const d = new Date(item.current_dt);
+      rows.push([
+        d.toLocaleDateString(),
+        d.toLocaleTimeString(),
         item.Head_Count,
         item.Indoor_Temp,
         item.Outdoor_Temp,
         item.Power,
         item.RPM,
         item.Failed_Device ? "Yes" : "No"
-      ]),
-      styles: {
-        fontSize: 9,
-        cellPadding: 2
-      },
-      headStyles: {
-        fillColor: [76, 175, 80],
-        textColor: 255
-      },
-      margin: { left: 10, right: 10 },
-      theme: "grid",
-
-      // ✅ Footer with copyright
-      didDrawPage: function (data) {
-        const pageHeight = doc.internal.pageSize.height || 297;
-        doc.setFontSize(9);
-        doc.setTextColor(150);
-        doc.text(
-          `© ${new Date().getFullYear()} Mitzvah Engg. (India) Limited. All rights reserved.`,
-          doc.internal.pageSize.getWidth() / 2,
-          pageHeight - 10,
-          { align: "center" }
-        );
-      }
+      ]);
     });
 
-    doc.save(`device-${deviceName}-filtered-history.pdf`);
-  };
-};
-
-
-
-  // Generate CSV
-  const exportCSV = () => {
-    const rows = [
-      ['Date', 'Head Count', 'Indoor Temp', 'Outdoor Temp', 'Power', 'RPM', 'Failed'].join(',')
-    ];
-
-    filteredData.forEach((item) => {
-      rows.push([
-        new Date(item.current_dt).toLocaleDateString(), // Format timestamp to readable
-        item.Head_Count,
-        item.Indoor_Temp,
-        item.Outdoor_Temp,
-        item.Power,
-        item.RPM,
-        item.Failed_Device ? "Yes" : "No",
-      ].join(','));
-    });
-
-    const csvContent = rows.join('\n');
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-    saveAs(blob, `device-${deviceName}-filtered-history.csv`);
+    const blob = new Blob(
+      [rows.map(r => r.join(",")).join("\n")],
+      { type: "text/csv;charset=utf-8" }
+    );
+    saveAs(blob, `device-${deviceName}-history.csv`);
   };
 
-  if (loading) return <p style={{ padding: "20px" }}>Loading ⏳...</p>;
+  if (loading) return <p style={{ padding: 20 }}>Loading...</p>;
 
   return (
-    <div
-      style={{ padding: "20px", fontFamily: "Helvetica, Arial, sans-serif", backgroundColor: "#f9f9f9", minHeight: "100vh" }}>
-      <h2 style={{ color: "#333" }}>Device History</h2>
+    <div style={{ padding: "20px", backgroundColor: "#f9f9f9" }}>
+      <h2>Device History</h2>
 
+      {/* DEVICE INFO */}
       <h3>Client Name: {clientName}</h3>
       <h3>Device Name: {deviceName}</h3>
-      <h3>Location: {location},{city},{state}</h3>
+      <h3>Location: {location}, {city}, {state}</h3>
 
-      {/* 🔍 Date Filter Inputs */}
-      <div style={{ marginBottom: "20px" }}>
-        <label style={{ marginRight: "10px" }}>
-          Start Date:{" "}
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </label>
+      {/* DATE FILTER */}
+      <div style={{ marginBottom: 15 }}>
         <label>
-          End Date:{" "}
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
+          Start Date:&nbsp;
+          <input type="date" onChange={e => setStartDate(e.target.value)} />
+        </label>
+        &nbsp;&nbsp;
+        <label>
+          End Date:&nbsp;
+          <input type="date" onChange={e => setEndDate(e.target.value)} />
         </label>
       </div>
 
+      {/* TOTAL COUNT */}
+      <p style={{ fontWeight: "bold" }}>
+        Total Records: {totalCount}
+      </p>
+
       <button
         onClick={downloadPDF}
-        style={{ padding: "10px 20px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "5px", marginBottom: "20px", marginRight:'10px', cursor: "pointer" }}>
+        style={{ marginRight: 10, padding: "8px 16px", background: "#4CAF50", color: "#fff", border: "none", borderRadius: 5 }}
+      >
         Download Filtered PDF
       </button>
 
       <button
         onClick={exportCSV}
-        style={{ padding: "10px 20px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "5px", marginBottom: "20px", cursor: "pointer" }}>
+        style={{ padding: "8px 16px", background: "#4CAF50", color: "#fff", border: "none", borderRadius: 5 }}
+      >
         Export CSV
       </button>
 
-      {/* Filtered Data Table */}
-      <div style={{ overflowX: "auto" }}>
-        <table
-          style={{ 
-            marginBottom: "70px",
-            width: "100%", 
-            borderCollapse: "collapse", 
-            backgroundColor: "#fff", 
-            color: "#000", 
-            boxShadow: "0 4px 14px rgb(0 0 0 / 0.1)", 
-            borderRadius: "12px",
-            overflow: "hidden"
-          }}>
-          <thead style={{ backgroundColor: "#4CAF50", color: "white" }}>
+      {/* TABLE */}
+      <div style={{ overflowX: "auto", marginTop: 20 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff" }}>
+          <thead style={{ background: "#4CAF50", color: "#fff" }}>
             <tr>
-              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Date</th>
-              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Head Count</th>
-              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Indoor Temp</th>
-              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Outdoor Temp</th>
-              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Power</th>
-              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>RPM</th>
-              <th style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>Failed</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Head Count</th>
+              <th>Indoor Temp</th>
+              <th>Outdoor Temp</th>
+              <th>Power</th>
+              <th>RPM</th>
+              <th>Failed</th>
             </tr>
           </thead>
           <tbody>
-            {filteredData.length > 0 ? (
-              filteredData.map((item, index) => (
-                <tr
-                    key={index}
-                    style={{ 
-                      backgroundColor: index % 2 === 0 ? "#f5f5f5" : "#ffffff", 
-                      transition: "background-color 0.3s ease" 
-                    }}>
-                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>
-                      {new Date(item.current_dt).toLocaleDateString()}
-                    </td>
-                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Head_Count}</td>
-                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Indoor_Temp}°C</td>
-                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Outdoor_Temp}°C</td>
-                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Power} W</td>
-                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.RPM}</td>
-                    <td style={{ padding: "12px 20px", borderBottom: "1px solid #dddddd" }}>{item.Failed_Device ? "Yes" : "No"}</td>
+            {sortedData.map((item, index) => {
+              const d = new Date(item.current_dt);
+              return (
+                <tr key={index} style={{ background: index % 2 ? "#f5f5f5" : "#fff" }}>
+                  <td>{d.toLocaleDateString()}</td>
+                  <td>{d.toLocaleTimeString()}</td>
+                  <td>{item.Head_Count}</td>
+                  <td>{item.Indoor_Temp}°C</td>
+                  <td>{item.Outdoor_Temp}°C</td>
+                  <td>{item.Power} W</td>
+                  <td>{item.RPM}</td>
+                  <td>{item.Failed_Device ? "Yes" : "No"}</td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="7" style={{ padding: "20px", textAlign: "center" }}>No data found for this range</td>
-              </tr>
-            )}
-
+              );
+            })}
           </tbody>
         </table>
       </div>

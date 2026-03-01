@@ -208,35 +208,65 @@ async function fetchDatafromDatabase4(ele) {
   return [rsp["Item"]];
 }
 async function fetchAllDataByUniqueId(ele) {
-  // ele should be an object containing at least { uniqueId }
-  var params = {
-    TableName: empTable4,
-    KeyConditionExpression: "uniqueId = :uid",
-    ExpressionAttributeValues: {
-      ":uid": ele.uniqueId,
-    },
-  };
-  const rsp = await DynamoDBDocumentClient.from(dynamoDB).send(
-    new QueryCommand(params)
-  );
-  return rsp.Items || []; // return an empty array if no items found
+  let items = [];
+  let lastKey = undefined;
+
+  do {
+    const params = {
+      TableName: empTable4,
+      KeyConditionExpression: "uniqueId = :uid",
+      ExpressionAttributeValues: {
+        ":uid": ele.uniqueId
+      },
+      ExclusiveStartKey: lastKey
+    };
+
+    const rsp = await DynamoDBDocumentClient
+      .from(dynamoDB)
+      .send(new QueryCommand(params));
+
+    if (rsp.Items) {
+      items.push(...rsp.Items);
+    }
+
+    lastKey = rsp.LastEvaluatedKey;
+
+  } while (lastKey);
+
+  return items;
 }
 async function fetchDataByUniqueIdAndDateRange(ele) {
-  // ele should be an object containing { uniqueId, startDate, endDate }
-  var params = {
-    TableName: empTable4,
-    KeyConditionExpression: "uniqueId = :uid AND current_dt BETWEEN :startDt AND :endDt",
-    ExpressionAttributeValues: {
-      ":uid": ele.uniqueId,
-      ":startDt": Number(ele.startDate),  // 🛠 convert to Number
-      ":endDt": Number(ele.endDate), 
-    },
-  };
-  const rsp = await DynamoDBDocumentClient.from(dynamoDB).send(
-    new QueryCommand(params)
-  );
-  return rsp.Items || []; // return an empty array if no items found
+  let items = [];
+  let lastKey = undefined;
+
+  do {
+    const params = {
+      TableName: empTable4,
+      KeyConditionExpression:
+        "uniqueId = :uid AND current_dt BETWEEN :startDt AND :endDt",
+      ExpressionAttributeValues: {
+        ":uid": ele.uniqueId,
+        ":startDt": Number(ele.startDate),
+        ":endDt": Number(ele.endDate)
+      },
+      ExclusiveStartKey: lastKey
+    };
+
+    const rsp = await DynamoDBDocumentClient
+      .from(dynamoDB)
+      .send(new QueryCommand(params));
+
+    if (rsp.Items) {
+      items.push(...rsp.Items);
+    }
+
+    lastKey = rsp.LastEvaluatedKey;
+
+  } while (lastKey);
+
+  return items;
 }
+
 app.get("/items/:uniqueId", async (req, res) => {
   const { uniqueId } = req.params;
   const { startDate, endDate } = req.query;
@@ -244,10 +274,8 @@ app.get("/items/:uniqueId", async (req, res) => {
   try {
     let data;
     if (startDate && endDate) {
-      // both dates present → range query
       data = await fetchDataByUniqueIdAndDateRange({ uniqueId, startDate, endDate });
     } else {
-      // no or partial dates → fetch all
       data = await fetchAllDataByUniqueId({ uniqueId });
     }
     return res.json({ count: data.length, items: data });
@@ -1116,10 +1144,10 @@ app.post("/delete-device", async (req, res) => {
 
 
 // Serve frontend (Vite build)
-app.use(express.static(path.join(__dirname, "client/dist")));
+app.use(express.static(path.join(__dirname, "../client/dist")));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "client/dist", "index.html"));
+  res.sendFile(path.resolve(__dirname, "../client/dist/index.html"));
 });
 
 
